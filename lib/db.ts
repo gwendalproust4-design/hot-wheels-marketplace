@@ -197,10 +197,16 @@ export const db = {
         .single();
       if (error) throw error;
 
-      await supabase
-        .from('products')
-        .update({ status: 'sold', stock: 0 })
-        .eq('id', order.product_id);
+      // Reserve the product using the server-side API (bypassing RLS)
+      try {
+        await fetch('/api/products/reserve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productIds: [order.product_id] })
+        });
+      } catch (err) {
+        console.error('Failed to reserve product on checkout:', err);
+      }
 
       return {
         ...order,

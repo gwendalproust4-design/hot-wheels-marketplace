@@ -96,9 +96,23 @@ export default function CartPage() {
           status: 'pending' as any
         });
 
-        // 2. Decrement stock of all items in cart to 0 (reserved)
-        for (const item of cartItems) {
-          await db.updateProduct(item.id, { stock: 0, status: 'sold' });
+        // 2. Decrement stock of all items in cart to 0 (reserved) via server API to bypass client RLS limits
+        try {
+          await fetch('/api/products/reserve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productIds: cartItems.map(item => item.id) })
+          });
+        } catch (err) {
+          console.error('Failed to reserve products via API:', err);
+        }
+
+        // Local state mock update for local mode
+        const isSup = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+        if (!isSup) {
+          for (const item of cartItems) {
+            await db.updateProduct(item.id, { stock: 0, status: 'sold' });
+          }
         }
 
         // 3. Send quote message structure to live chat
