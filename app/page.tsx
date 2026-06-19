@@ -131,57 +131,61 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Column: Floating Widescreen Display Car */}
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <div className="slant-cut" style={{
-                width: '100%',
-                maxWidth: heroAspectRatio < 1.1 ? '260px' : '350px',
-                aspectRatio: heroAspectRatio,
-                height: 'auto',
-                backgroundColor: '#03040a',
-                border: '2px solid var(--color-crimson)',
-                boxShadow: '0 0 30px rgba(47, 47, 228, 0.25)',
-                overflow: 'hidden',
-                borderRadius: 'var(--radius-md)',
-                transition: 'all var(--transition-normal)'
-              }}>
-                <div className="slant-cut-child" style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  {/* Blurred background clone to handle portrait/landscape nicely */}
-                  <img 
-                    src={featuredProduct.images[0]} 
-                    alt="" 
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      filter: 'blur(15px) brightness(0.65)',
-                      opacity: 0.6,
-                      zIndex: 1,
-                      transform: 'scale(1.25)'
-                    }}
-                  />
-                  {/* Foreground crisp display image */}
-                  <img 
-                    src={featuredProduct.images[0]} 
-                    alt={featuredProduct.title} 
-                    onLoad={(e) => {
-                      const img = e.currentTarget;
-                      if (img.naturalWidth && img.naturalHeight) {
-                        setHeroAspectRatio(img.naturalWidth / img.naturalHeight);
-                      }
-                    }}
-                    style={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      objectFit: 'cover',
-                      position: 'relative',
-                      zIndex: 2,
-                      transform: 'scale(1.25)'
-                    }}
-                  />
+            {/* Right Column: Luxurious Floating Showroom Display */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+              <div className="hero-showcase-container">
+                {/* Radial spotlight effect behind the product */}
+                <div className="hero-glow-bg" />
+                
+                {/* Float animation wrapper */}
+                <div className="hero-product-wrapper">
+                  {/* High-end borderless glassmorphic showcase */}
+                  <div className="hero-product-image-container" style={{
+                    width: '100%',
+                    maxWidth: heroAspectRatio < 1.1 ? '280px' : '420px',
+                    aspectRatio: heroAspectRatio,
+                    position: 'relative'
+                  }}>
+                    {/* Soft ambient back-illumination clone */}
+                    <img 
+                      src={featuredProduct.images[0]} 
+                      alt="" 
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        filter: 'blur(20px) brightness(0.6)',
+                        opacity: 0.5,
+                        zIndex: 1,
+                        transform: 'scale(1.1)'
+                      }}
+                    />
+                    
+                    {/* Front high-resolution model view */}
+                    <img 
+                      src={featuredProduct.images[0]} 
+                      alt={featuredProduct.title} 
+                      onLoad={(e) => {
+                        const img = e.currentTarget;
+                        if (img.naturalWidth && img.naturalHeight) {
+                          setHeroAspectRatio(img.naturalWidth / img.naturalHeight);
+                        }
+                      }}
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover',
+                        position: 'relative',
+                        zIndex: 2
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Soft 3D ground shadow */}
+                  <div className="hero-floor-shadow" />
                 </div>
               </div>
             </div>
@@ -497,6 +501,91 @@ export default function Home() {
       <style jsx global>{`
         #catalog {
           scroll-margin-top: 100px;
+        }
+
+        /* Showroom Hero Luxurious Animations */
+        @keyframes hero-float {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-16px); }
+          100% { transform: translateY(0px); }
+        }
+        @keyframes ambient-glow {
+          0% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.9); }
+          50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.1); }
+          100% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.9); }
+        }
+        @keyframes floor-shadow {
+          0% { transform: scale(1); opacity: 0.35; }
+          50% { transform: scale(0.85); opacity: 0.18; }
+          100% { transform: scale(1); opacity: 0.35; }
+        }
+
+        .hero-showcase-container {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          padding: 2.5rem 1.5rem;
+          overflow: visible;
+        }
+
+        .hero-glow-bg {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 130%;
+          height: 130%;
+          background: radial-gradient(circle, rgba(0, 225, 255, 0.15) 0%, rgba(228, 47, 153, 0.06) 45%, transparent 70%);
+          filter: blur(45px);
+          pointer-events: none;
+          z-index: 1;
+          animation: ambient-glow 7s ease-in-out infinite;
+        }
+
+        .hero-product-wrapper {
+          position: relative;
+          z-index: 2;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          animation: hero-float 5.5s ease-in-out infinite;
+        }
+
+        .hero-product-image-container {
+          width: 100%;
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 
+            0 25px 55px rgba(0, 0, 0, 0.55), 
+            0 0 30px rgba(0, 225, 255, 0.05);
+          transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .hero-product-image-container:hover {
+          box-shadow: 
+            0 35px 75px rgba(0, 0, 0, 0.65), 
+            0 0 50px rgba(0, 225, 255, 0.2);
+          border-color: rgba(0, 225, 255, 0.25);
+          transform: scale(1.02);
+        }
+
+        .hero-floor-shadow {
+          width: 75%;
+          height: 16px;
+          background: radial-gradient(ellipse, rgba(0, 0, 0, 0.6) 0%, transparent 80%);
+          position: absolute;
+          bottom: -15px;
+          left: 12.5%;
+          z-index: 1;
+          pointer-events: none;
+          animation: floor-shadow 5.5s ease-in-out infinite;
         }
       `}</style>
     </div>
