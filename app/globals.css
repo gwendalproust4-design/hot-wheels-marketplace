@@ -484,7 +484,7 @@ button {
 }
 .grid-profile-transactions.seller-role {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
 }
 .grid-profile-transactions.buyer-role {
   display: grid;

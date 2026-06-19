@@ -857,7 +857,7 @@ function ProfilePageContent() {
             padding: '0.5rem 1rem'
           }}
         >
-          {user.role === 'seller' ? 'Commandes & Ventes' : 'Mes Commandes'}
+          {user.role === 'seller' ? 'Commandes Clients' : 'Mes Commandes'}
         </button>
         <button 
           onClick={() => setActiveTab('account')}
@@ -1276,7 +1276,8 @@ function ProfilePageContent() {
       {activeTab === 'transactions' && (
         <div className={`grid grid-profile-transactions ${user.role === 'seller' ? 'seller-role' : 'buyer-role'}`} style={{ gap: '2.5rem' }}>
           {/* Purchases List */}
-          <div className="card" style={{ padding: '1.5rem' }}>
+          {user.role !== 'seller' && (
+            <div className="card" style={{ padding: '1.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '1.5rem', letterSpacing: '0.05em', color: 'var(--color-cyan)' }}>
               Mes Achats (Historique Commandes)
             </h3>
@@ -1508,6 +1509,7 @@ function ProfilePageContent() {
               </div>
             )}
           </div>
+          )}
 
           {/* Sales List (for Seller only) */}
           {user.role === 'seller' && (
