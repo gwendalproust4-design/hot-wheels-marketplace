@@ -53,6 +53,7 @@ function BasketQuoteBubble({
 
   const order = userOrders.find(o => o.id === quoteData.orderId);
   const isPaid = order?.status === 'paid';
+  const isCancelled = order?.status === 'cancelled';
   const hasShipping = order && !order.delivery_method.startsWith('DEVIS_PENDING|');
   const finalShippingPrice = order && hasShipping ? (order.total_price - quoteData.subtotal) : 0;
   const finalTotalPrice = order && hasShipping ? order.total_price : quoteData.subtotal;
@@ -121,13 +122,55 @@ function BasketQuoteBubble({
     }
   };
 
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleCancelQuote = async () => {
+    if (!order) return;
+    if (!window.confirm("Êtes-vous sûr de vouloir annuler ce devis et remettre les voitures en vente ?")) {
+      return;
+    }
+
+    setCancelling(true);
+    try {
+      // 1. Update order status to 'cancelled' in DB
+      await db.updateOrderStatus(quoteData.orderId, {
+        status: 'cancelled' as any
+      });
+
+      // 2. Call server API to release products back to stock
+      const productIds = quoteData.items.map((item: any) => item.id);
+      await fetch('/api/products/release', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productIds })
+      });
+
+      // 3. Send cancellation message in the chat
+      const senderRoleName = user.role === 'seller' ? 'le vendeur' : "l'acheteur";
+      await db.sendMessage({
+        sender_id: user.id,
+        receiver_id: msg.sender_id === user.id ? msg.receiver_id : msg.sender_id,
+        product_id: msg.product_id,
+        content: `❌ Le devis a été annulé par ${senderRoleName}. Les articles ont été remis en stock.`
+      });
+
+      showToast('Devis annulé. Les articles ont été remis en stock.', 'success');
+      loadUserOrders();
+    } catch (err: any) {
+      console.error('Failed to cancel devis:', err);
+      showToast(err.message || 'Erreur lors de l\'annulation', 'error');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   return (
     <div className="card card-glass" style={{
       width: '100%',
       maxWidth: '420px',
       padding: '1.25rem',
       borderRadius: 'var(--radius-md)',
-      border: isPaid ? '1px solid var(--success)' : '1px solid var(--border-color)',
+      border: isPaid ? '1px solid var(--success)' : isCancelled ? '1px solid rgba(255, 0, 0, 0.3)' : '1px solid var(--border-color)',
       background: 'rgba(26, 25, 83, 0.5)',
       boxShadow: 'var(--shadow-md)',
       textAlign: 'left'
@@ -139,6 +182,8 @@ function BasketQuoteBubble({
         </span>
         {isPaid ? (
           <span className="badge badge-success" style={{ fontSize: '0.65rem' }}>Payé ✓</span>
+        ) : isCancelled ? (
+          <span className="badge" style={{ fontSize: '0.65rem', backgroundColor: 'rgba(255, 0, 0, 0.12)', color: '#ff0055', borderColor: 'rgba(255, 0, 85, 0.3)', border: '1px solid' }}>Annulé ❌</span>
         ) : hasShipping ? (
           <span className="badge badge-blister" style={{ fontSize: '0.65rem', backgroundColor: 'rgba(255,179,0,0.12)', color: 'var(--warning)', borderColor: 'rgba(255,179,0,0.3)' }}>Frais Validés</span>
         ) : (
@@ -189,65 +234,101 @@ function BasketQuoteBubble({
         }}>
           Le paiement a été validé ! Commande enregistrée.
         </div>
-      ) : hasShipping ? (
-        user.role === 'buyer' ? (
-          <button
-            onClick={handlePay}
-            className="btn btn-primary"
-            style={{ width: '100%', padding: '0.65rem', fontSize: '0.8rem', fontWeight: 800 }}
-          >
-            Procéder au paiement ({finalTotalPrice.toFixed(2)} €)
-          </button>
-        ) : (
-          <div style={{
-            backgroundColor: 'rgba(255, 179, 0, 0.05)',
-            border: '1px solid rgba(255, 179, 0, 0.2)',
-            borderRadius: 'var(--radius-sm)',
-            padding: '0.65rem',
-            textAlign: 'center',
-            fontSize: '0.8rem',
-            color: 'var(--warning)',
-            fontWeight: 600
-          }}>
-            Frais de port validés. En attente de paiement par l'acheteur.
-          </div>
-        )
+      ) : isCancelled ? (
+        <div style={{
+          backgroundColor: 'rgba(255, 0, 0, 0.05)',
+          border: '1px solid rgba(255, 0, 0, 0.2)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '0.65rem',
+          textAlign: 'center',
+          fontSize: '0.8rem',
+          fontWeight: 700,
+          color: '#ff0055'
+        }}>
+          Ce devis a été annulé. Les articles sont de nouveau en vente.
+        </div>
       ) : (
-        user.role === 'seller' ? (
-          <form onSubmit={handleValidateShipping} className="flex gap-2" style={{ marginTop: '0.5rem' }}>
-            <input
-              type="number"
-              step="0.01"
-              required
-              placeholder="Frais de port (€)"
-              value={shippingInput}
-              onChange={(e) => setShippingInput(e.target.value)}
-              className="form-input"
-              style={{ padding: '0.5rem', fontSize: '0.8rem', flex: 1, backgroundColor: 'rgba(4, 5, 10, 0.8)' }}
-              disabled={validating}
-            />
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{ padding: '0.5rem 0.85rem', fontSize: '0.75rem', fontWeight: 800 }}
-              disabled={validating}
-            >
-              {validating ? 'Validation...' : 'Valider'}
-            </button>
-          </form>
-        ) : (
-          <div style={{
-            backgroundColor: 'rgba(255,255,255,0.02)',
-            border: '1px dashed rgba(255,255,255,0.1)',
-            borderRadius: 'var(--radius-sm)',
-            padding: '0.65rem',
-            textAlign: 'center',
-            fontSize: '0.78rem',
-            color: 'var(--text-muted)'
-          }}>
-            En attente de l'évaluation des frais de port par le vendeur...
-          </div>
-        )
+        <>
+          {hasShipping ? (
+            user.role === 'buyer' ? (
+              <button
+                onClick={handlePay}
+                className="btn btn-primary"
+                style={{ width: '100%', padding: '0.65rem', fontSize: '0.8rem', fontWeight: 800 }}
+              >
+                Procéder au paiement ({finalTotalPrice.toFixed(2)} €)
+              </button>
+            ) : (
+              <div style={{
+                backgroundColor: 'rgba(255, 179, 0, 0.05)',
+                border: '1px solid rgba(255, 179, 0, 0.2)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.65rem',
+                textAlign: 'center',
+                fontSize: '0.8rem',
+                color: 'var(--warning)',
+                fontWeight: 600
+              }}>
+                Frais de port validés. En attente de paiement par l'acheteur.
+              </div>
+            )
+          ) : (
+            user.role === 'seller' ? (
+              <form onSubmit={handleValidateShipping} className="flex gap-2" style={{ marginTop: '0.5rem' }}>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  placeholder="Frais de port (€)"
+                  value={shippingInput}
+                  onChange={(e) => setShippingInput(e.target.value)}
+                  className="form-input"
+                  style={{ padding: '0.5rem', fontSize: '0.8rem', flex: 1, backgroundColor: 'rgba(4, 5, 10, 0.8)' }}
+                  disabled={validating}
+                />
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ padding: '0.5rem 0.85rem', fontSize: '0.75rem', fontWeight: 800 }}
+                  disabled={validating}
+                >
+                  {validating ? 'Validation...' : 'Valider'}
+                </button>
+              </form>
+            ) : (
+              <div style={{
+                backgroundColor: 'rgba(255,255,255,0.02)',
+                border: '1px dashed rgba(255,255,255,0.1)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.65rem',
+                textAlign: 'center',
+                fontSize: '0.78rem',
+                color: 'var(--text-muted)'
+              }}>
+                En attente de l'évaluation des frais de port par le vendeur...
+              </div>
+            )
+          )}
+
+          {/* Cancellation Trigger */}
+          <button
+            onClick={handleCancelQuote}
+            className="btn btn-secondary"
+            style={{ 
+              width: '100%', 
+              padding: '0.5rem', 
+              fontSize: '0.75rem', 
+              fontWeight: 700, 
+              backgroundColor: 'rgba(255, 0, 0, 0.05)', 
+              color: '#ff0055',
+              border: '1px solid rgba(255, 0, 85, 0.15)',
+              marginTop: '0.75rem'
+            }}
+            disabled={cancelling}
+          >
+            {cancelling ? 'Annulation...' : 'Annuler le devis'}
+          </button>
+        </>
       )}
     </div>
   );

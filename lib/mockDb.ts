@@ -36,7 +36,7 @@ export interface Order {
   product_title: string;
   product_image: string;
   total_price: number;
-  status: 'pending' | 'paid' | 'shipped' | 'delivered';
+  status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
   stripe_session_id?: string;
   delivery_method: string;
   shipping_address: {
