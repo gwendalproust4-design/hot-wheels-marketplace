@@ -1,44 +1,62 @@
-# Épinglage d'Annonces Miniatures - Walkthrough
+# Bourse d'Échanges - Annonces, Esthétique & Flux de Devis
 
-La fonctionnalité permettant au vendeur d'épingler une annonce pour la mettre en vedette sur la page d'accueil (Showroom Hero), avec bascule automatique sur le dernier modèle disponible en stock en cas d'absence d'épingle, a été entièrement intégrée et validée.
+Toutes les fonctionnalités ont été développées, testées, intégrées et poussées sur le dépôt en ligne.
 
-## Modifications apportées
+---
 
-### 1. Extensions de Schéma & Migration SQL
-- **Schema SQL** : Modifié [supabase_setup.sql](file:///C:/Users/Gwendal/.gemini/antigravity/scratch/hot-wheels-marketplace/supabase_setup.sql) pour ajouter la colonne `is_pinned BOOLEAN DEFAULT false NOT NULL` sur la table `products`.
-- **Mock Database** : Modifié [lib/mockDb.ts](file:///C:/Users/Gwendal/.gemini/antigravity/scratch/hot-wheels-marketplace/lib/mockDb.ts) pour ajouter `is_pinned` à la définition de l'interface `Product` et aux graines d'exemple (`SEED_PRODUCTS`).
+## 1. Nouvelle Logique de Livraison & Frais de Port
+Mise à jour de la grille des frais de port pour s'aligner précisément sur vos conditions :
+* **Mondial Relay (4.50 €)** : France, Belgique, Luxembourg, Allemagne, Espagne, Italie, Pays-Bas, Pologne, Portugal.
+* **Royaume-Uni (19.00 €)**
+* **Autre Europe (15.00 €)** : Pays européens hors liste Mondial Relay (ex: Suisse).
+* **Reste du Monde (35.50 €)** : Envois internationaux.
 
-### 2. Actions et Transactions de Bascule
-- **Logique de la Base de données** : Implémenté `togglePinProduct` dans [lib/db.ts](file:///C:/Users/Gwendal/.gemini/antigravity/scratch/hot-wheels-marketplace/lib/db.ts) et [lib/mockDb.ts](file:///C:/Users/Gwendal/.gemini/antigravity/scratch/hot-wheels-marketplace/lib/mockDb.ts). Cette fonction unpin automatiquement toutes les autres annonces du vendeur lorsqu'une nouvelle annonce est épinglée (garantissant un seul modèle vedette à la fois).
-- **Création de Produit** : Mis à jour `createProduct` pour initialiser explicitement `is_pinned` à `false` lors d'une nouvelle publication.
+---
 
-### 3. Tableau de bord Vendeur
-- Modifié [app/profile/page.tsx](file:///C:/Users/Gwendal/.gemini/antigravity/scratch/hot-wheels-marketplace/app/profile/page.tsx) :
-  - Importation et intégration de l'icône `Pin` de `lucide-react`.
-  - Ajout du gestionnaire `handleTogglePinProduct` pour mettre à jour l'état et recharger instantanément la vue.
-  - Dans la liste « Mes Annonces », si l'annonce est en stock, affichage d'un bouton d'épinglage. L'icône est colorée en bleu cyan brillant si le produit est actif (épinglé), ou reste en sourdine si inactif.
+## 2. Achat Direct vs Demande de Devis (Panier Multi-produits)
+* **Achat unique (1 article)** : Le bouton de paiement direct Stripe est conservé. Les frais de port du pays de livraison sont appliqués automatiquement.
+* **Achat multiple (2 articles ou plus)** :
+  * **Dans le Panier** : Les frais de port affichent "Calculé par le vendeur". Le bouton devient "Demander un devis (Envoi au chat)".
+  * **Soumission du Devis** :
+    * Création d'une commande au statut `pending` (en attente).
+    * Retrait instantané des articles du stock (mis à `stock: 0` et `status: 'sold'`).
+    * Envoi d'une fiche de devis dynamique (`[BASKET_QUOTE]:{...}`) dans la conversation de chat.
+    * Redirection automatique vers la messagerie instantanée.
 
-### 4. Page d'Accueil & Algorithme Showroom Hero
-- Modifié [app/page.tsx](file:///C:/Users/Gwendal/.gemini/antigravity/scratch/hot-wheels-marketplace/app/page.tsx) pour adapter la résolution du `featuredProduct` (Showroom) :
-  1. Le moteur cherche en priorité l'annonce épinglée qui est encore en stock : `p.is_pinned && p.stock > 0 && p.status === 'available'`.
-  2. Si aucune annonce n'est épinglée ou s'il y a rupture de stock sur l'épingle active, elle bascule automatiquement sur la dernière annonce en stock mise en ligne (triée antéchronologiquement).
-  3. En dernier recours, s'il n'y a plus aucun produit en stock, le premier modèle du catalogue est affiché.
+---
 
-## Résultats de la compilation
+## 3. Panier Interactif & Actions dans la Messagerie
+L'interface de chat intercepte les messages de type panier et affiche un panneau récapitulatif interactif :
+* **Vue Vendeur** : Un champ de saisie permet de spécifier les frais de port personnalisés et de cliquer sur "Valider". Cela met à jour le montant final en base et notifie l'acheteur.
+* **Vue Acheteur** :
+  * Tant que le vendeur n'a pas validé les frais de port, affichage de la mention "En attente de l'évaluation des frais par le vendeur...".
+  * Dès validation par le vendeur, affichage du total mis à jour et d'un bouton "Procéder au paiement".
+  * Au clic, redirection vers Stripe Simulator pour finaliser le paiement.
+* **Validation Finale** : Une fois la transaction effectuée, l'encart passe au statut vert "Commande validée & payée ✓" en temps réel (mise à jour toutes les 2 secondes).
 
-Le projet Next.js a été compilé en production pour s'assurer de sa conformité TypeScript et de l'intégrité de la structure des pages :
+---
 
-```bash
-▲ Next.js 16.2.9 (Turbopack)
-- Environments: .env.local
+## 4. Design Esthétique Luxe & Showroom Hero Sans Cadre
+* **Suppression des cadres inclinés (slant-cut)** : Les bordures rigides et sombres ont été supprimées pour donner une impression de légèreté et d'intégration parfaite.
+* **Ambient Spotlight (Glow)** : Un dégradé radial animé en arrière-plan (`hero-glow-bg`) simule un projecteur de studio de shooting de luxe derrière le véhicule.
+* **Effet de flottaison 3D** : L'image flotte doucement à la verticale (`hero-float`) synchronisée avec une ombre au sol ovale (`hero-floor-shadow`) qui s'estompe et se redimensionne selon la hauteur du modèle.
+* **Conteneur Glassmorphic** : La photo du modèle repose dans un écrin de verre doté d'une fine bordure lumineuse réflective (`border: 1px solid rgba(255, 255, 255, 0.08)`) qui réagit doucement au survol (`scale`, augmentation de l'éclat).
+* **Adaptabilité & Remplissage** : L'image remplit à 100% le conteneur adapté dynamiquement à l'aspect ratio (portrait ou paysage) sans jamais afficher de bandes noires.
 
-  Creating an optimized production build ...
-✓ Compiled successfully in 2.8s
+---
+
+## 5. Retrait de la section Achat pour le Vendeur unique
+Comme le site est destiné à n'avoir qu'un seul vendeur qui ne réalise pas d'achats :
+* **Filtrage de l'interface** : La section "Mes Achats" (historique des commandes) a été masquée pour le rôle vendeur (`user.role === 'seller'`) dans l'onglet des transactions du profil.
+* **Layout Fluide & Plein Écran** : Le style CSS du conteneur `.grid-profile-transactions.seller-role` a été mis à jour pour s'afficher sur une seule colonne (`grid-template-columns: 1fr`) afin que la liste "Mes Ventes" occupe désormais 100% de la largeur d'écran disponible sur desktop de manière premium.
+* **Texte des Onglets** : L'onglet de navigation a été renommé de "Commandes & Ventes" à "Commandes Clients" pour le vendeur pour plus de cohérence.
+
+---
+
+## 6. Build de Production & Validation Git
+* **Compilation Next.js** : Le build de production est validé et fonctionnel :
+  ```bash
+  ✓ Compiled successfully in 2.6s
   Running TypeScript ...
-  Finished TypeScript in 4.2s ...
-  Collecting page data using 12 workers ...
-✓ Generating static pages using 12 workers (10/10) in 835ms
-  Finalizing page optimization ...
-```
-
-Le build est 100% propre et opérationnel !
+  Finished TypeScript in 3.7s ...
+  ```
