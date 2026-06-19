@@ -6,7 +6,7 @@ export const isStripeConfigured = !!stripeSecretKey;
 
 export const stripe = isStripeConfigured
   ? new Stripe(stripeSecretKey, {
-      apiVersion: '2024-12-19-ac' as any,
+      apiVersion: '2022-11-15' as any,
     })
   : null;
 
