@@ -7,10 +7,29 @@ export async function POST(request: Request) {
     const { productId, buyerId, sellerId, title, image, price, deliveryMethod, shippingAddress, totalPrice, orderId } = body;
 
     if (!productId || !buyerId || !price) {
+      console.warn('Checkout API: Missing required parameters', { productId, buyerId, price });
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // Safely parse shipping address (could be stringified JSON or an object)
+    let parsedAddress: any = {};
+    if (shippingAddress) {
+      if (typeof shippingAddress === 'string') {
+        try {
+          parsedAddress = JSON.parse(shippingAddress);
+        } catch (e) {
+          console.warn('Checkout API: Failed to parse shippingAddress as JSON, using raw string:', shippingAddress);
+          parsedAddress = { addressLine1: shippingAddress };
+        }
+      } else {
+        parsedAddress = shippingAddress;
+      }
+    }
+
+    // Dynamically resolve baseUrl from request headers to support any Vercel domain automatically
+    const host = request.headers.get('host') || 'localhost:3000';
+    const protocol = host.startsWith('localhost') || host.startsWith('127.0.0.1') ? 'http' : 'https';
+    const baseUrl = `${protocol}://${host}`;
 
     if (isStripeConfigured && stripe) {
       // Validate image URL for Stripe (must be HTTP/S and <= 2048 chars)
@@ -21,12 +40,14 @@ export async function POST(request: Request) {
         productId,
         buyerId,
         sellerId,
-        deliveryMethod,
-        shippingAddress: JSON.stringify(shippingAddress),
+        deliveryMethod: deliveryMethod || 'Standard',
+        shippingAddress: typeof shippingAddress === 'string' ? shippingAddress : JSON.stringify(shippingAddress || {}),
       };
       if (orderId) {
         stripeMetadata.orderId = orderId;
       }
+
+      console.log('Checkout API: Creating Stripe session with metadata:', stripeMetadata);
 
       // Create Stripe Checkout Session
       const session = await stripe.checkout.sessions.create({
@@ -39,7 +60,7 @@ export async function POST(request: Request) {
                 name: title || 'Hot Wheels Collectible',
                 images: stripeImages,
               },
-              unit_amount: Math.round(price * 100), // Stripe expects cents
+              unit_amount: Math.round(Number(price) * 100), // Stripe expects cents
             },
             quantity: 1,
           },
@@ -54,6 +75,8 @@ export async function POST(request: Request) {
 
       return NextResponse.json({ url: session.url });
     } else {
+      console.log('Checkout API: Stripe is not configured. Falling back to local Simulator.');
+      
       // Fallback: Redirect to Mock Stripe Page
       // Serialize details to query params for the mock simulator
       const queryParams = new URLSearchParams({
@@ -61,13 +84,13 @@ export async function POST(request: Request) {
         buyerId,
         sellerId,
         price: price.toString(),
-        totalPrice: totalPrice.toString(),
-        deliveryMethod,
-        fullName: shippingAddress.fullName || '',
-        addressLine1: shippingAddress.addressLine1 || '',
-        city: shippingAddress.city || '',
-        postalCode: shippingAddress.postalCode || '',
-        country: shippingAddress.country || '',
+        totalPrice: (totalPrice ?? price ?? 0).toString(),
+        deliveryMethod: deliveryMethod || 'Standard',
+        fullName: parsedAddress?.fullName || '',
+        addressLine1: parsedAddress?.addressLine1 || '',
+        city: parsedAddress?.city || '',
+        postalCode: parsedAddress?.postalCode || '',
+        country: parsedAddress?.country || '',
       });
       if (orderId) {
         queryParams.set('orderId', orderId);
