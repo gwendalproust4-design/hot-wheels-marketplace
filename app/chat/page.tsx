@@ -541,13 +541,17 @@ function ChatPageContent() {
           borderRight: '1px solid var(--border-color)',
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: 'var(--bg-primary)'
+          backgroundColor: 'var(--bg-primary)',
+          height: '100%',
+          maxHeight: '100%',
+          minHeight: 0,
+          overflow: 'hidden'
         }}>
           <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--border-color)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.8rem', color: 'var(--color-cyan)' }}>
             Discussions
           </div>
           
-          <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div className="chat-channels-list" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
             {channels.length === 0 ? (
               <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                 Aucune conversation active.
@@ -606,7 +610,15 @@ function ChatPageContent() {
 
         {/* Right: Active Chat Area */}
         {activeChannel && currentChannelDetail ? (
-          <div className="chat-area" style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: 'var(--bg-secondary)' }}>
+          <div className="chat-area" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            maxHeight: '100%',
+            minHeight: 0,
+            backgroundColor: 'var(--bg-secondary)',
+            overflow: 'hidden'
+          }}>
             {/* Header: Chat partner and product badge */}
             <div className="flex justify-between items-center" style={{
               padding: '1rem 1.5rem',
@@ -644,6 +656,7 @@ function ChatPageContent() {
               style={{
                 flex: 1,
                 overflowY: 'auto',
+                minHeight: 0,
                 padding: '1.5rem',
                 display: 'flex',
                 flexDirection: 'column',
@@ -736,6 +749,22 @@ function ChatPageContent() {
         .chat-messages-container::-webkit-scrollbar-thumb:hover {
           background: #ffffff !important;
           box-shadow: 0 0 10px #ffffff !important;
+        }
+
+        .chat-channels-list::-webkit-scrollbar {
+          width: 5px !important;
+        }
+        .chat-channels-list::-webkit-scrollbar-track {
+          background: rgba(4, 5, 10, 0.2) !important;
+          border-radius: 9999px !important;
+        }
+        .chat-channels-list::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.15) !important;
+          border-radius: 9999px !important;
+        }
+        .chat-channels-list::-webkit-scrollbar-thumb:hover {
+          background: var(--color-cyan) !important;
+          box-shadow: 0 0 6px var(--color-cyan-glow) !important;
         }
       `}</style>
     </div>
