@@ -88,6 +88,25 @@ export const db = {
     return mockDb.deleteProduct(id);
   },
 
+  updateProduct: async (id: string, updates: Partial<Product>): Promise<boolean> => {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('products')
+        .update(updates)
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    }
+    const products = mockDb.getProducts();
+    const index = products.findIndex(p => p.id === id);
+    if (index !== -1) {
+      products[index] = { ...products[index], ...updates };
+      mockDb.setProducts(products);
+      return true;
+    }
+    return false;
+  },
+
   // --- Orders ---
   getOrders: async (userId: string): Promise<Order[]> => {
     if (isSupabaseConfigured && supabase) {
@@ -155,20 +174,25 @@ export const db = {
     return mockDb.getOrders().filter(o => o.seller_id === userId);
   },
 
-  createOrder: async (order: Omit<Order, 'id' | 'created_at' | 'status'>): Promise<Order> => {
+  createOrder: async (order: Omit<Order, 'id' | 'created_at' | 'status'> & { id?: string; status?: 'pending' | 'paid' | 'shipped' | 'delivered' }): Promise<Order> => {
+    const statusVal = order.status || 'paid';
     if (isSupabaseConfigured && supabase) {
+      const insertData: any = {
+        buyer_id: order.buyer_id,
+        seller_id: order.seller_id,
+        product_id: order.product_id,
+        total_price: order.total_price,
+        status: statusVal,
+        delivery_method: order.delivery_method,
+        shipping_address: order.shipping_address,
+        buyer_email: order.buyer_email
+      };
+      if (order.id) {
+        insertData.id = order.id;
+      }
       const { data, error } = await supabase
         .from('orders')
-        .insert([{
-          buyer_id: order.buyer_id,
-          seller_id: order.seller_id,
-          product_id: order.product_id,
-          total_price: order.total_price,
-          status: 'paid',
-          delivery_method: order.delivery_method,
-          shipping_address: order.shipping_address,
-          buyer_email: order.buyer_email
-        }])
+        .insert([insertData])
         .select()
         .single();
       if (error) throw error;
@@ -181,7 +205,7 @@ export const db = {
       return {
         ...order,
         id: data.id,
-        status: 'paid',
+        status: statusVal,
         created_at: data.created_at
       };
     }
@@ -190,16 +214,12 @@ export const db = {
 
   updateOrderStatus: async (
     orderId: string,
-    updates: { status: 'pending' | 'paid' | 'shipped' | 'delivered'; carrier?: string; tracking_number?: string }
+    updates: Partial<Order>
   ): Promise<Order | null> => {
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from('orders')
-        .update({
-          status: updates.status,
-          carrier: updates.carrier,
-          tracking_number: updates.tracking_number
-        })
+        .update(updates)
         .eq('id', orderId)
         .select()
         .single();

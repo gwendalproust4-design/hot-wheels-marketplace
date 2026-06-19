@@ -4,7 +4,7 @@ import { stripe, isStripeConfigured } from '@/lib/stripe';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { productId, buyerId, sellerId, title, image, price, deliveryMethod, shippingAddress, totalPrice } = body;
+    const { productId, buyerId, sellerId, title, image, price, deliveryMethod, shippingAddress, totalPrice, orderId } = body;
 
     if (!productId || !buyerId || !price) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
@@ -16,6 +16,17 @@ export async function POST(request: Request) {
       // Validate image URL for Stripe (must be HTTP/S and <= 2048 chars)
       const isValidUrl = image && (image.startsWith('http://') || image.startsWith('https://')) && image.length <= 2048;
       const stripeImages = isValidUrl ? [image] : [];
+
+      const stripeMetadata: any = {
+        productId,
+        buyerId,
+        sellerId,
+        deliveryMethod,
+        shippingAddress: JSON.stringify(shippingAddress),
+      };
+      if (orderId) {
+        stripeMetadata.orderId = orderId;
+      }
 
       // Create Stripe Checkout Session
       const session = await stripe.checkout.sessions.create({
@@ -34,15 +45,11 @@ export async function POST(request: Request) {
           },
         ],
         mode: 'payment',
-        success_url: `${baseUrl}/profile?checkout_success=true&session_id={CHECKOUT_SESSION_ID}&productId=${productId}`,
+        success_url: orderId 
+          ? `${baseUrl}/profile?checkout_success=true&session_id={CHECKOUT_SESSION_ID}&orderId=${orderId}`
+          : `${baseUrl}/profile?checkout_success=true&session_id={CHECKOUT_SESSION_ID}&productId=${productId}`,
         cancel_url: `${baseUrl}/cart?checkout_cancel=true`,
-        metadata: {
-          productId,
-          buyerId,
-          sellerId,
-          deliveryMethod,
-          shippingAddress: JSON.stringify(shippingAddress),
-        },
+        metadata: stripeMetadata,
       });
 
       return NextResponse.json({ url: session.url });
@@ -62,6 +69,9 @@ export async function POST(request: Request) {
         postalCode: shippingAddress.postalCode || '',
         country: shippingAddress.country || '',
       });
+      if (orderId) {
+        queryParams.set('orderId', orderId);
+      }
 
       return NextResponse.json({ 
         url: `/checkout/mock-stripe?${queryParams.toString()}`,

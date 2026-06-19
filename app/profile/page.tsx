@@ -56,117 +56,137 @@ function ProfilePageContent() {
   // URL parameters handling for success checks
   useEffect(() => {
     const success = searchParams.get('checkout_success');
+    const orderId = searchParams.get('orderId');
     const prodId = searchParams.get('productId');
     const sessionId = searchParams.get('session_id');
 
-    if (success === 'true' && prodId) {
-      showToast('Paiement validé ! Commande enregistrée.', 'success');
-      
-      async function registerOrder() {
-        if (!user || !prodId) return;
-        try {
-          let orderData = {
-            buyer_id: user.id,
-            seller_id: '',
-            product_id: prodId,
-            product_title: '',
-            product_image: '',
-            total_price: 0,
-            delivery_method: 'Colissimo',
-            shipping_address: {
-              fullName: user.full_name,
-              addressLine1: 'Stripe Address',
-              city: 'Paris',
-              postalCode: '75000',
-              country: 'France'
-            },
-            buyer_email: user.email
-          };
-
-          if (sessionId) {
-            try {
-              const res = await fetch(`/api/checkout/session?session_id=${sessionId}`);
-              if (res.ok) {
-                const stripeData = await res.json();
-                orderData.shipping_address = stripeData.shippingAddress;
-                orderData.delivery_method = stripeData.deliveryMethod;
-                orderData.total_price = stripeData.totalPrice;
-                if (stripeData.buyerEmail) {
-                  orderData.buyer_email = stripeData.buyerEmail;
-                }
-              }
-            } catch (err) {
-              console.warn('Failed to retrieve Stripe session details, using fallback:', err);
-            }
-          }
-
-          const prod = await db.getProductById(prodId);
-          if (prod) {
-            orderData.seller_id = prod.seller_id;
-            orderData.product_title = prod.title;
-            orderData.product_image = prod.images[0] || '';
-            if (orderData.total_price === 0) {
-              orderData.total_price = prod.price + 5.90;
-            }
-            await db.createOrder(orderData);
-
-            // Trigger order confirmation email
-            try {
-              await fetch('/api/send-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  to: user.email,
-                  subject: `Confirmation de votre commande - Hot Wheels Marketplace`,
-                  html: `
-                    <div style="background-color: #060713; color: #ffffff; font-family: sans-serif; padding: 2rem; border-radius: 8px; max-width: 600px; margin: 0 auto; border: 1px solid #00efff;">
-                      <h1 style="color: #00efff; text-align: center; border-bottom: 2px solid #ff007f; padding-bottom: 1rem; margin-top: 0;">Commande Confirmée !</h1>
-                      <p style="font-size: 1.1rem; line-height: 1.6;">Merci pour votre achat sur notre marketplace premium.</p>
-                      <div style="background-color: rgba(255,0,127,0.05); border: 1px solid rgba(255,0,127,0.2); padding: 1.25rem; border-radius: 6px; margin: 1.5rem 0;">
-                        <h3 style="color: #ff007f; margin-top: 0; margin-bottom: 0.75rem;">Récapitulatif de la commande</h3>
-                        <table style="width: 100%; color: #ffffff; font-size: 0.95rem;">
-                          <tr>
-                            <td style="padding: 0.25rem 0; color: #a3acb9;">Modèle :</td>
-                            <td style="padding: 0.25rem 0; font-weight: bold; text-align: right;">${orderData.product_title}</td>
-                          </tr>
-                          <tr>
-                            <td style="padding: 0.25rem 0; color: #a3acb9;">Mode de livraison :</td>
-                            <td style="padding: 0.25rem 0; text-align: right;">${orderData.delivery_method}</td>
-                          </tr>
-                          <tr>
-                            <td style="padding: 0.25rem 0; color: #a3acb9;">Montant Total :</td>
-                            <td style="padding: 0.25rem 0; font-weight: bold; color: #ff007f; text-align: right;">${orderData.total_price.toFixed(2)} €</td>
-                          </tr>
-                        </table>
-                      </div>
-                      <div style="background-color: rgba(0,239,255,0.05); border: 1px solid rgba(0,239,255,0.2); padding: 1.25rem; border-radius: 6px; margin: 1.5rem 0;">
-                        <h3 style="color: #00efff; margin-top: 0; margin-bottom: 0.75rem;">Adresse de livraison</h3>
-                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: #e6ebf1;">
-                          <strong>${orderData.shipping_address.fullName}</strong><br/>
-                          ${orderData.shipping_address.addressLine1}<br/>
-                          ${orderData.shipping_address.postalCode} ${orderData.shipping_address.city}<br/>
-                          ${orderData.shipping_address.country}
-                        </p>
-                      </div>
-                      <p style="font-size: 0.9rem; color: #a3acb9; text-align: center; margin-top: 2rem;">Vous recevrez un e-mail avec un lien de suivi dès que le vendeur aura expédié votre colis.</p>
-                    </div>
-                  `
-                })
-              });
-            } catch (emailErr) {
-              console.warn('Failed to send confirmation email:', emailErr);
-            }
-
+    if (success === 'true') {
+      if (orderId) {
+        showToast('Paiement validé ! Commande enregistrée.', 'success');
+        async function confirmExistingOrder() {
+          try {
+            await db.updateOrderStatus(orderId as string, { status: 'paid' });
             loadProfileData(); // Reload orders lists
+          } catch (err) {
+            console.error('Failed to confirm existing order:', err);
+          } finally {
+            setActiveTab('transactions');
+            router.replace('/profile?tab=transactions');
           }
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setActiveTab('transactions');
-          router.replace('/profile?tab=transactions');
         }
+        confirmExistingOrder();
+        return;
       }
-      registerOrder();
+
+      if (prodId) {
+        showToast('Paiement validé ! Commande enregistrée.', 'success');
+        
+        async function registerOrder() {
+          if (!user || !prodId) return;
+          try {
+            let orderData = {
+              buyer_id: user.id,
+              seller_id: '',
+              product_id: prodId,
+              product_title: '',
+              product_image: '',
+              total_price: 0,
+              delivery_method: 'Colissimo',
+              shipping_address: {
+                fullName: user.full_name,
+                addressLine1: 'Stripe Address',
+                city: 'Paris',
+                postalCode: '75000',
+                country: 'France'
+              },
+              buyer_email: user.email
+            };
+
+            if (sessionId) {
+              try {
+                const res = await fetch(`/api/checkout/session?session_id=${sessionId}`);
+                if (res.ok) {
+                  const stripeData = await res.json();
+                  orderData.shipping_address = stripeData.shippingAddress;
+                  orderData.delivery_method = stripeData.deliveryMethod;
+                  orderData.total_price = stripeData.totalPrice;
+                  if (stripeData.buyerEmail) {
+                    orderData.buyer_email = stripeData.buyerEmail;
+                  }
+                }
+              } catch (err) {
+                console.warn('Failed to retrieve Stripe session details, using fallback:', err);
+              }
+            }
+
+            const prod = await db.getProductById(prodId);
+            if (prod) {
+              orderData.seller_id = prod.seller_id;
+              orderData.product_title = prod.title;
+              orderData.product_image = prod.images[0] || '';
+              if (orderData.total_price === 0) {
+                orderData.total_price = prod.price + 5.90;
+              }
+              await db.createOrder(orderData);
+
+              // Trigger order confirmation email
+              try {
+                await fetch('/api/send-email', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    to: user.email,
+                    subject: `Confirmation de votre commande - Hot Wheels Marketplace`,
+                    html: `
+                      <div style="background-color: #060713; color: #ffffff; font-family: sans-serif; padding: 2rem; border-radius: 8px; max-width: 600px; margin: 0 auto; border: 1px solid #00efff;">
+                        <h1 style="color: #00efff; text-align: center; border-bottom: 2px solid #ff007f; padding-bottom: 1rem; margin-top: 0;">Commande Confirmée !</h1>
+                        <p style="font-size: 1.1rem; line-height: 1.6;">Merci pour votre achat sur notre marketplace premium.</p>
+                        <div style="background-color: rgba(255,0,127,0.05); border: 1px solid rgba(255,0,127,0.2); padding: 1.25rem; border-radius: 6px; margin: 1.5rem 0;">
+                          <h3 style="color: #ff007f; margin-top: 0; margin-bottom: 0.75rem;">Récapitulatif de la commande</h3>
+                          <table style="width: 100%; color: #ffffff; font-size: 0.95rem;">
+                            <tr>
+                              <td style="padding: 0.25rem 0; color: #a3acb9;">Modèle :</td>
+                              <td style="padding: 0.25rem 0; font-weight: bold; text-align: right;">${orderData.product_title}</td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 0.25rem 0; color: #a3acb9;">Mode de livraison :</td>
+                              <td style="padding: 0.25rem 0; text-align: right;">${orderData.delivery_method}</td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 0.25rem 0; color: #a3acb9;">Montant Total :</td>
+                              <td style="padding: 0.25rem 0; font-weight: bold; color: #ff007f; text-align: right;">${orderData.total_price.toFixed(2)} €</td>
+                            </tr>
+                          </table>
+                        </div>
+                        <div style="background-color: rgba(0,239,255,0.05); border: 1px solid rgba(0,239,255,0.2); padding: 1.25rem; border-radius: 6px; margin: 1.5rem 0;">
+                          <h3 style="color: #00efff; margin-top: 0; margin-bottom: 0.75rem;">Adresse de livraison</h3>
+                          <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: #e6ebf1;">
+                            <strong>${orderData.shipping_address.fullName}</strong><br/>
+                            ${orderData.shipping_address.addressLine1}<br/>
+                            ${orderData.shipping_address.postalCode} ${orderData.shipping_address.city}<br/>
+                            ${orderData.shipping_address.country}
+                          </p>
+                        </div>
+                        <p style="font-size: 0.9rem; color: #a3acb9; text-align: center; margin-top: 2rem;">Vous recevrez un e-mail avec un lien de suivi dès que le vendeur aura expédié votre colis.</p>
+                      </div>
+                    `
+                  })
+                });
+              } catch (emailErr) {
+                console.warn('Failed to send confirmation email:', emailErr);
+              }
+
+              loadProfileData(); // Reload orders lists
+            }
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setActiveTab('transactions');
+            router.replace('/profile?tab=transactions');
+          }
+        }
+        registerOrder();
+      }
     }
   }, [searchParams, user]);
 

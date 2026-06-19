@@ -254,12 +254,12 @@ export const mockDb = {
     }
   },
 
-  createOrder: (orderData: Omit<Order, 'id' | 'created_at' | 'status'>) => {
+  createOrder: (orderData: Omit<Order, 'id' | 'created_at' | 'status'> & { id?: string; status?: 'pending' | 'paid' | 'shipped' | 'delivered' }) => {
     const orders = mockDb.getOrders();
     const newOrder: Order = {
       ...orderData,
-      id: 'ord-' + Math.random().toString(36).substr(2, 9),
-      status: 'paid',
+      id: orderData.id || 'ord-' + Math.random().toString(36).substr(2, 9),
+      status: orderData.status || 'paid',
       created_at: new Date().toISOString()
     };
     orders.push(newOrder);

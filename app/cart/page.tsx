@@ -7,18 +7,21 @@ import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Trash2, CreditCard, Shield, Truck, MapPin, ArrowRight, ShoppingCart } from 'lucide-react';
+import { db } from '@/lib/db';
 
 const SHIPPING_COSTS: Record<string, { price: number; name: string }> = {
-  'France': { price: 4.90, name: 'Colissimo Suivi (France)' },
-  'Belgique': { price: 6.90, name: 'Livraison Suivie (Belgique)' },
-  'Luxembourg': { price: 6.90, name: 'Livraison Suivie (Luxembourg)' },
-  'Allemagne': { price: 7.90, name: 'Livraison Suivie (Allemagne)' },
-  'Espagne': { price: 7.90, name: 'Livraison Suivie (Espagne)' },
-  'Italie': { price: 7.90, name: 'Livraison Suivie (Italie)' },
-  'Royaume-Uni': { price: 9.90, name: 'Livraison Suivie (Royaume-Uni)' },
-  'Suisse': { price: 9.90, name: 'Livraison Suivie (Suisse)' },
-  'Autre Europe': { price: 11.90, name: 'Livraison Suivie (Europe)' },
-  'Reste du monde': { price: 19.90, name: 'Livraison Suivie (International)' }
+  'France': { price: 4.50, name: 'Mondial Relay (France)' },
+  'Belgique': { price: 4.50, name: 'Mondial Relay (Belgique)' },
+  'Luxembourg': { price: 4.50, name: 'Mondial Relay (Luxembourg)' },
+  'Allemagne': { price: 4.50, name: 'Mondial Relay (Allemagne)' },
+  'Espagne': { price: 4.50, name: 'Mondial Relay (Espagne)' },
+  'Italie': { price: 4.50, name: 'Mondial Relay (Italie)' },
+  'Pays-Bas': { price: 4.50, name: 'Mondial Relay (Pays-Bas)' },
+  'Pologne': { price: 4.50, name: 'Mondial Relay (Pologne)' },
+  'Portugal': { price: 4.50, name: 'Mondial Relay (Portugal)' },
+  'Royaume-Uni': { price: 19.00, name: 'Livraison Suivie (Royaume-Uni)' },
+  'Autre Europe': { price: 15.00, name: 'Livraison Suivie (Europe)' },
+  'Reste du monde': { price: 35.50, name: 'Livraison Suivie (International)' }
 };
 
 export default function CartPage() {
@@ -36,9 +39,10 @@ export default function CartPage() {
   });
   const [checkingOut, setCheckingOut] = useState(false);
 
+  const isMultiProduct = cartItems.length > 1;
   const shippingInfo = SHIPPING_COSTS[address.country] || SHIPPING_COSTS['France'];
   const itemsSubtotal = cartItems.reduce((acc, item) => acc + item.price, 0);
-  const totalPrice = itemsSubtotal + shippingInfo.price;
+  const totalPrice = isMultiProduct ? itemsSubtotal : (itemsSubtotal + shippingInfo.price);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -65,6 +69,67 @@ export default function CartPage() {
     }
 
     setCheckingOut(true);
+
+    if (isMultiProduct) {
+      try {
+        const primaryProduct = cartItems[0];
+        const orderId = 'ord-' + Math.random().toString(36).substr(2, 9);
+        
+        // 1. Create a pending order with status pending
+        await db.createOrder({
+          id: orderId,
+          buyer_id: user.id,
+          seller_id: primaryProduct.seller_id,
+          product_id: primaryProduct.id,
+          product_title: `${primaryProduct.title} + ${cartItems.length - 1} autre(s) modèle(s)`,
+          product_image: primaryProduct.images?.[0] || '',
+          total_price: itemsSubtotal,
+          delivery_method: `DEVIS_PENDING|${JSON.stringify(cartItems.map(item => ({
+            id: item.id,
+            title: item.title,
+            price: item.price,
+            image: item.images?.[0] || '',
+            series: item.series,
+            year: item.year,
+            condition: item.condition
+          })))}`,
+          shipping_address: address,
+          buyer_email: user.email,
+          status: 'pending' as any
+        });
+
+        // 2. Decrement stock of all items in cart to 0 (reserved)
+        for (const item of cartItems) {
+          await db.updateProduct(item.id, { stock: 0, status: 'sold' });
+        }
+
+        // 3. Send quote message structure to live chat
+        const msgContent = `[BASKET_QUOTE]:${JSON.stringify({
+          orderId: orderId,
+          items: cartItems.map(item => ({ id: item.id, title: item.title, price: item.price })),
+          subtotal: itemsSubtotal,
+          shippingAddress: address
+        })}`;
+
+        await db.sendMessage({
+          sender_id: user.id,
+          receiver_id: primaryProduct.seller_id,
+          product_id: primaryProduct.id,
+          content: msgContent
+        });
+
+        // 4. Clear cart and redirect to conversation
+        clearCart();
+        showToast('Demande de devis envoyée avec succès au vendeur !', 'success');
+        router.push(`/chat?productId=${primaryProduct.id}&recipientId=${primaryProduct.seller_id}`);
+      } catch (err: any) {
+        console.error('Quote checkout error:', err);
+        showToast(err.message || 'Erreur lors de la création du devis', 'error');
+      } finally {
+        setCheckingOut(false);
+      }
+      return;
+    }
 
     try {
       const primaryProduct = cartItems[0];
@@ -183,18 +248,26 @@ export default function CartPage() {
               <Truck size={18} />
               <span>Tarif de livraison</span>
             </h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem', lineHeight: '1.5' }}>
-              Les frais de port sont calculés automatiquement en fonction du pays de destination saisi ci-contre.
-            </p>
-            <div className="flex justify-between items-center" style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-              <div>
-                <h4 style={{ fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>{shippingInfo.name}</h4>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Envoi soigné avec suivi international</p>
-              </div>
-              <span style={{ fontWeight: 800, color: 'var(--color-cyan)', fontSize: '1.15rem' }}>
-                {shippingInfo.price.toFixed(2)} €
-              </span>
-            </div>
+            {isMultiProduct ? (
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                Pour un panier contenant plusieurs articles, les frais de port sont calculés manuellement par le vendeur dans le chat après soumission du panier.
+              </p>
+            ) : (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem', lineHeight: '1.5' }}>
+                  Les frais de port sont calculés automatiquement en fonction du pays de destination saisi ci-contre.
+                </p>
+                <div className="flex justify-between items-center" style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                  <div>
+                    <h4 style={{ fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>{shippingInfo.name}</h4>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Envoi soigné avec suivi international</p>
+                  </div>
+                  <span style={{ fontWeight: 800, color: 'var(--color-cyan)', fontSize: '1.15rem' }}>
+                    {shippingInfo.price.toFixed(2)} €
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -275,8 +348,10 @@ export default function CartPage() {
                 <option value="Allemagne">Allemagne</option>
                 <option value="Espagne">Espagne</option>
                 <option value="Italie">Italie</option>
+                <option value="Pays-Bas">Pays-Bas</option>
+                <option value="Pologne">Pologne</option>
+                <option value="Portugal">Portugal</option>
                 <option value="Royaume-Uni">Royaume-Uni</option>
-                <option value="Suisse">Suisse</option>
                 <option value="Autre Europe">Autre pays d'Europe</option>
                 <option value="Reste du monde">Reste du monde</option>
               </select>
@@ -295,8 +370,17 @@ export default function CartPage() {
                 <span>{itemsSubtotal.toFixed(2)} €</span>
               </div>
               <div className="flex justify-between" style={{ color: 'var(--text-secondary)' }}>
-                <span>Frais de port ({shippingInfo.name})</span>
-                <span>{shippingInfo.price.toFixed(2)} €</span>
+                {isMultiProduct ? (
+                  <>
+                    <span>Frais de port</span>
+                    <span style={{ color: 'var(--warning)', fontWeight: 600 }}>Calculé par le vendeur</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Frais de port ({shippingInfo.name})</span>
+                    <span>{shippingInfo.price.toFixed(2)} €</span>
+                  </>
+                )}
               </div>
               
               <div style={{ borderTop: '1px solid var(--border-color)', margin: '0.5rem 0', paddingTop: '1rem' }} />
@@ -314,7 +398,13 @@ export default function CartPage() {
               disabled={checkingOut}
             >
               <CreditCard size={16} />
-              <span>{checkingOut ? 'Redirection...' : 'Payer avec Stripe'}</span>
+              <span>
+                {checkingOut 
+                  ? 'Redirection...' 
+                  : isMultiProduct 
+                    ? 'Demander un devis (Envoi au chat)' 
+                    : 'Payer avec Stripe'}
+              </span>
               <ArrowRight size={14} />
             </button>
 

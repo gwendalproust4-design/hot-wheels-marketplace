@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { db } from '@/lib/db';
-import { mockDb, Message, Product, Profile } from '@/lib/mockDb';
+import { mockDb, Message, Product, Profile, Order } from '@/lib/mockDb';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Send, MessageSquare, Bookmark } from 'lucide-react';
@@ -15,6 +15,242 @@ interface ChatChannel {
   product: Product;
   otherProfile: Profile;
   lastMessage: Message;
+}
+
+function BasketQuoteBubble({ 
+  msg, 
+  isSentByMe, 
+  userOrders, 
+  loadUserOrders, 
+  activeChannel 
+}: { 
+  msg: Message; 
+  isSentByMe: boolean; 
+  userOrders: Order[]; 
+  loadUserOrders: () => void; 
+  activeChannel: any; 
+}) {
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const [shippingInput, setShippingInput] = useState('');
+  const [validating, setValidating] = useState(false);
+
+  // Parse quote data
+  let quoteData: any = null;
+  try {
+    quoteData = JSON.parse(msg.content.substring('[BASKET_QUOTE]:'.length));
+  } catch (e) {
+    console.error('Failed to parse basket quote message:', e);
+  }
+
+  if (!quoteData || !user) {
+    return (
+      <div className="card card-glass" style={{ padding: '1rem', color: 'var(--error)' }}>
+        Erreur de chargement du devis.
+      </div>
+    );
+  }
+
+  const order = userOrders.find(o => o.id === quoteData.orderId);
+  const isPaid = order?.status === 'paid';
+  const hasShipping = order && !order.delivery_method.startsWith('DEVIS_PENDING|');
+  const finalShippingPrice = order && hasShipping ? (order.total_price - quoteData.subtotal) : 0;
+  const finalTotalPrice = order && hasShipping ? order.total_price : quoteData.subtotal;
+
+  const handleValidateShipping = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (user.role !== 'seller') return;
+    const shippingPrice = parseFloat(shippingInput);
+    if (isNaN(shippingPrice) || shippingPrice < 0) {
+      showToast('Veuillez saisir un montant de frais de port valide', 'error');
+      return;
+    }
+
+    setValidating(true);
+    try {
+      // 1. Update the order in database with total_price and new delivery_method
+      await db.updateOrderStatus(quoteData.orderId, {
+        total_price: quoteData.subtotal + shippingPrice,
+        delivery_method: 'Livraison Personnalisée'
+      });
+
+      // 2. Send notice message
+      await db.sendMessage({
+        sender_id: user.id,
+        receiver_id: msg.sender_id, // sender of the quote was the buyer
+        product_id: msg.product_id,
+        content: `Frais de port validés à ${shippingPrice.toFixed(2)} € pour votre commande multi-produits. Vous pouvez procéder au paiement.`
+      });
+
+      showToast('Frais de port enregistrés et validés !', 'success');
+      loadUserOrders();
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || 'Erreur lors de la validation', 'error');
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const handlePay = async () => {
+    if (!order) return;
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: order.product_id,
+          buyerId: user.id,
+          sellerId: order.seller_id,
+          title: order.product_title,
+          image: order.product_image,
+          price: quoteData.subtotal,
+          deliveryMethod: order.delivery_method,
+          shippingAddress: order.shipping_address,
+          totalPrice: order.total_price,
+          orderId: order.id
+        })
+      });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      console.error('Payment redirect failed:', err);
+      showToast('Impossible de rediriger vers Stripe', 'error');
+    }
+  };
+
+  return (
+    <div className="card card-glass" style={{
+      width: '100%',
+      maxWidth: '420px',
+      padding: '1.25rem',
+      borderRadius: 'var(--radius-md)',
+      border: isPaid ? '1px solid var(--success)' : '1px solid var(--border-color)',
+      background: 'rgba(26, 25, 83, 0.5)',
+      boxShadow: 'var(--shadow-md)',
+      textAlign: 'left'
+    }}>
+      {/* Title */}
+      <div className="flex justify-between items-center" style={{ marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-cyan)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          📦 Devis Multi-modèles
+        </span>
+        {isPaid ? (
+          <span className="badge badge-success" style={{ fontSize: '0.65rem' }}>Payé ✓</span>
+        ) : hasShipping ? (
+          <span className="badge badge-blister" style={{ fontSize: '0.65rem', backgroundColor: 'rgba(255,179,0,0.12)', color: 'var(--warning)', borderColor: 'rgba(255,179,0,0.3)' }}>Frais Validés</span>
+        ) : (
+          <span className="badge badge-blister" style={{ fontSize: '0.65rem' }}>En attente</span>
+        )}
+      </div>
+
+      {/* Items list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+        {quoteData.items.map((item: any, idx: number) => (
+          <div key={idx} className="flex justify-between" style={{ fontSize: '0.82rem', color: '#fff' }}>
+            <span>• {item.title}</span>
+            <span style={{ fontWeight: 700 }}>{item.price.toFixed(2)} €</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem', marginBottom: '1rem', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+        <div className="flex justify-between">
+          <span style={{ color: 'var(--text-secondary)' }}>Sous-total</span>
+          <span style={{ fontWeight: 700 }}>{quoteData.subtotal.toFixed(2)} €</span>
+        </div>
+
+        {hasShipping ? (
+          <div className="flex justify-between">
+            <span style={{ color: 'var(--text-secondary)' }}>Frais de port</span>
+            <span style={{ fontWeight: 700, color: 'var(--color-cyan)' }}>{finalShippingPrice.toFixed(2)} €</span>
+          </div>
+        ) : null}
+
+        <div className="flex justify-between" style={{ fontSize: '0.95rem', fontWeight: 800, borderTop: '1px dotted rgba(255,255,255,0.1)', paddingTop: '0.5rem', marginTop: '0.25rem' }}>
+          <span>Total</span>
+          <span className="neon-gradient-text">{finalTotalPrice.toFixed(2)} €</span>
+        </div>
+      </div>
+
+      {/* Actions / Form */}
+      {isPaid ? (
+        <div style={{
+          backgroundColor: 'rgba(0, 255, 102, 0.05)',
+          border: '1px solid rgba(0, 255, 102, 0.2)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '0.65rem',
+          textAlign: 'center',
+          fontSize: '0.8rem',
+          fontWeight: 700,
+          color: 'var(--success)'
+        }}>
+          Le paiement a été validé ! Commande enregistrée.
+        </div>
+      ) : hasShipping ? (
+        user.role === 'buyer' ? (
+          <button
+            onClick={handlePay}
+            className="btn btn-primary"
+            style={{ width: '100%', padding: '0.65rem', fontSize: '0.8rem', fontWeight: 800 }}
+          >
+            Procéder au paiement ({finalTotalPrice.toFixed(2)} €)
+          </button>
+        ) : (
+          <div style={{
+            backgroundColor: 'rgba(255, 179, 0, 0.05)',
+            border: '1px solid rgba(255, 179, 0, 0.2)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '0.65rem',
+            textAlign: 'center',
+            fontSize: '0.8rem',
+            color: 'var(--warning)',
+            fontWeight: 600
+          }}>
+            Frais de port validés. En attente de paiement par l'acheteur.
+          </div>
+        )
+      ) : (
+        user.role === 'seller' ? (
+          <form onSubmit={handleValidateShipping} className="flex gap-2" style={{ marginTop: '0.5rem' }}>
+            <input
+              type="number"
+              step="0.01"
+              required
+              placeholder="Frais de port (€)"
+              value={shippingInput}
+              onChange={(e) => setShippingInput(e.target.value)}
+              className="form-input"
+              style={{ padding: '0.5rem', fontSize: '0.8rem', flex: 1, backgroundColor: 'rgba(4, 5, 10, 0.8)' }}
+              disabled={validating}
+            />
+            <button
+              type="submit"
+              className="btn btn-primary"
+              style={{ padding: '0.5rem 0.85rem', fontSize: '0.75rem', fontWeight: 800 }}
+              disabled={validating}
+            >
+              {validating ? 'Validation...' : 'Valider'}
+            </button>
+          </form>
+        ) : (
+          <div style={{
+            backgroundColor: 'rgba(255,255,255,0.02)',
+            border: '1px dashed rgba(255,255,255,0.1)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '0.65rem',
+            textAlign: 'center',
+            fontSize: '0.78rem',
+            color: 'var(--text-muted)'
+          }}>
+            En attente de l'évaluation des frais de port par le vendeur...
+          </div>
+        )
+      )}
+    </div>
+  );
 }
 
 function ChatPageContent() {
@@ -29,6 +265,17 @@ function ChatPageContent() {
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
+
+  const loadUserOrders = async () => {
+    if (!user) return;
+    try {
+      const ords = user.role === 'seller' ? await db.getSales(user.id) : await db.getOrders(user.id);
+      setUserOrders(ords);
+    } catch (err) {
+      console.error('Error loading user orders in chat:', err);
+    }
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasAutoSelected = useRef(false);
@@ -125,17 +372,20 @@ function ChatPageContent() {
   useEffect(() => {
     loadMessages();
     setTimeout(scrollToBottom, 100);
+    loadUserOrders();
   }, [activeChannel, user]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       loadMessages();
       loadChannels();
+      loadUserOrders();
     }, 2000);
 
     const handleNewMessage = () => {
       loadMessages();
       loadChannels();
+      loadUserOrders();
       setTimeout(scrollToBottom, 100);
     };
 
@@ -318,6 +568,16 @@ function ChatPageContent() {
             }}>
               {messages.map((msg) => {
                 const isSentByMe = msg.sender_id === user.id;
+                const isBasketQuote = msg.content.startsWith('[BASKET_QUOTE]:');
+                
+                if (isBasketQuote) {
+                  return (
+                    <div key={msg.id} style={{ display: 'flex', justifyContent: isSentByMe ? 'flex-end' : 'flex-start', margin: '1rem 0' }}>
+                      <BasketQuoteBubble msg={msg} isSentByMe={isSentByMe} userOrders={userOrders} loadUserOrders={loadUserOrders} activeChannel={activeChannel} />
+                    </div>
+                  );
+                }
+
                 return (
                   <div 
                     key={msg.id} 

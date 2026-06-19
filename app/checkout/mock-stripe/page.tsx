@@ -22,6 +22,7 @@ function MockStripeContent() {
   const price = parseFloat(searchParams.get('price') || '0');
   const totalPrice = parseFloat(searchParams.get('totalPrice') || '0');
   const deliveryMethod = searchParams.get('deliveryMethod') || 'Standard';
+  const orderId = searchParams.get('orderId') || '';
 
   useEffect(() => {
     if (productId) {
@@ -71,18 +72,26 @@ function MockStripeContent() {
     await new Promise(resolve => setTimeout(resolve, 800));
 
     try {
-      // Record order in local DB (which routes to Supabase or Mock fallback)
-      const createdOrd = await db.createOrder({
-        buyer_id: buyerId,
-        seller_id: sellerId,
-        product_id: productId,
-        product_title: resolvedTitle,
-        product_image: resolvedImage,
-        total_price: totalPrice,
-        delivery_method: deliveryMethod,
-        shipping_address: address,
-        buyer_email: cardForm.email
-      });
+      if (orderId) {
+        // Update existing order status to paid
+        await db.updateOrderStatus(orderId, {
+          status: 'paid',
+          buyer_email: cardForm.email
+        } as any);
+      } else {
+        // Record new order in local DB (which routes to Supabase or Mock fallback)
+        await db.createOrder({
+          buyer_id: buyerId,
+          seller_id: sellerId,
+          product_id: productId,
+          product_title: resolvedTitle,
+          product_image: resolvedImage,
+          total_price: totalPrice,
+          delivery_method: deliveryMethod,
+          shipping_address: address,
+          buyer_email: cardForm.email
+        });
+      }
 
       // Trigger order confirmation email to the buyer
       try {
@@ -132,7 +141,12 @@ function MockStripeContent() {
       }
 
       showToast('Paiement accepté ! Commande finalisée.', 'success');
-      router.push('/profile?tab=transactions');
+      
+      if (orderId) {
+        router.push(`/profile?checkout_success=true&orderId=${orderId}`);
+      } else {
+        router.push('/profile?tab=transactions');
+      }
     } catch (err) {
       console.error(err);
       showToast('Erreur lors de la validation du paiement', 'error');
