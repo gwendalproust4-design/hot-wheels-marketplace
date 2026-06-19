@@ -135,7 +135,7 @@ export default function Home() {
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <div className="slant-cut" style={{
                 width: '100%',
-                maxWidth: heroAspectRatio < 1.0 ? '300px' : '420px',
+                maxWidth: heroAspectRatio < 1.1 ? '260px' : '350px',
                 aspectRatio: heroAspectRatio,
                 height: 'auto',
                 backgroundColor: '#03040a',
@@ -145,7 +145,7 @@ export default function Home() {
                 borderRadius: 'var(--radius-md)',
                 transition: 'all var(--transition-normal)'
               }}>
-                <div className="slant-cut-child" style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="slant-cut-child" style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                   {/* Blurred background clone to handle portrait/landscape nicely */}
                   <img 
                     src={featuredProduct.images[0]} 
@@ -159,7 +159,8 @@ export default function Home() {
                       objectFit: 'cover',
                       filter: 'blur(15px) brightness(0.65)',
                       opacity: 0.6,
-                      zIndex: 1
+                      zIndex: 1,
+                      transform: 'scale(1.25)'
                     }}
                   />
                   {/* Foreground crisp display image */}
@@ -177,7 +178,8 @@ export default function Home() {
                       height: '100%', 
                       objectFit: 'cover',
                       position: 'relative',
-                      zIndex: 2
+                      zIndex: 2,
+                      transform: 'scale(1.25)'
                     }}
                   />
                 </div>
