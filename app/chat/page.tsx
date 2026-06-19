@@ -380,7 +380,7 @@ function ChatPageContent() {
       });
 
       const loadedChannels: ChatChannel[] = [];
-      const allProducts = await db.getProducts();
+      const allProducts = await db.getAllProducts();
       
       // profiles query
       const allProfiles = mockDb.getProfiles(); // mock profiles fallback

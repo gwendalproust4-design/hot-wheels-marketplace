@@ -18,6 +18,20 @@ export const db = {
     return mockDb.getProducts().filter(p => p.status === 'available');
   },
 
+  getAllProducts: async (): Promise<Product[]> => {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*');
+      if (error) throw error;
+      return (data || []).map((p: any) => ({
+        ...p,
+        images: Array.isArray(p.images) ? p.images : (p.images ? JSON.parse(p.images) : [])
+      })) as Product[];
+    }
+    return mockDb.getProducts();
+  },
+
   getProductById: async (id: string): Promise<Product | null> => {
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
