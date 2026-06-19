@@ -139,11 +139,34 @@ export default function Home() {
                 overflow: 'hidden',
                 borderRadius: 'var(--radius-md)'
               }}>
-                <div className="slant-cut-child" style={{ width: '100%', height: '100%' }}>
+                <div className="slant-cut-child" style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {/* Blurred background clone to handle portrait/landscape nicely */}
+                  <img 
+                    src={featuredProduct.images[0]} 
+                    alt="" 
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      filter: 'blur(15px) brightness(0.65)',
+                      opacity: 0.6,
+                      zIndex: 1
+                    }}
+                  />
+                  {/* Foreground crisp display image */}
                   <img 
                     src={featuredProduct.images[0]} 
                     alt={featuredProduct.title} 
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'contain',
+                      position: 'relative',
+                      zIndex: 2
+                    }}
                   />
                 </div>
               </div>
@@ -303,8 +326,28 @@ export default function Home() {
                     overflow: 'hidden',
                     backgroundColor: '#03040c',
                     marginBottom: '1rem',
-                    border: '1px solid var(--border-color)'
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}>
+                    {/* Blurred background clone to handle portrait/landscape nicely */}
+                    <img 
+                      src={primaryImage} 
+                      alt="" 
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        filter: 'blur(12px) brightness(0.65)',
+                        opacity: 0.6,
+                        zIndex: 1
+                      }}
+                    />
+                    {/* Crisp foreground product thumbnail */}
                     <img 
                       src={primaryImage} 
                       alt={product.title}
@@ -312,6 +355,8 @@ export default function Home() {
                         width: '100%',
                         height: '100%',
                         objectFit: 'contain',
+                        position: 'relative',
+                        zIndex: 2,
                         transition: 'transform var(--transition-normal)'
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
@@ -322,7 +367,7 @@ export default function Home() {
                       position: 'absolute',
                       top: '10px',
                       left: '10px',
-                      zIndex: 2,
+                      zIndex: 3,
                       fontWeight: 700
                     }}>
                       {product.condition === 'blister' ? 'Blister' : 'Loose'}
@@ -333,7 +378,7 @@ export default function Home() {
                       position: 'absolute',
                       bottom: '10px',
                       right: '10px',
-                      zIndex: 2,
+                      zIndex: 3,
                       backgroundColor: 'rgba(4, 5, 10, 0.85)',
                       color: 'var(--color-cyan)',
                       border: '1px solid var(--border-color)',

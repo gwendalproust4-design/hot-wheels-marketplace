@@ -160,12 +160,39 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
               borderRadius: 'var(--radius-sm)',
               overflow: 'hidden',
               backgroundColor: '#03040c',
-              border: '1px solid var(--border-color)'
+              border: '1px solid var(--border-color)',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}>
+              {/* Blurred background clone to handle portrait/landscape nicely */}
+              <img 
+                src={product.images[activeImgIndex] || 'https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?auto=format&fit=crop&q=80&w=800'} 
+                alt="" 
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  filter: 'blur(15px) brightness(0.65)',
+                  opacity: 0.6,
+                  zIndex: 1
+                }}
+              />
+              {/* Foreground crisp display image */}
               <img 
                 src={product.images[activeImgIndex] || 'https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?auto=format&fit=crop&q=80&w=800'} 
                 alt={product.title} 
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  position: 'relative',
+                  zIndex: 2
+                }}
               />
             </div>
             
