@@ -47,6 +47,14 @@ const CAR_PRESETS = [
   }
 ];
 
+const renderDeliveryMethod = (method: string) => {
+  if (!method) return 'Non spécifié';
+  if (method.startsWith('DEVIS_PENDING|')) {
+    return 'Devis (Frais de port à définir par le vendeur)';
+  }
+  return method;
+};
+
 function ProfilePageContent() {
   const { user, signIn, signUp, signOut, loading: authLoading } = useAuth();
   const { showToast } = useToast();
@@ -1221,11 +1229,14 @@ function ProfilePageContent() {
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID : #{ord.id.substring(0,8).toUpperCase()}</span>
                       <span className={`badge ${
                         ord.status === 'paid' ? 'badge-success' :
-                        ord.status === 'shipped' ? 'badge-loose' : 'badge-blister'
+                        ord.status === 'shipped' ? 'badge-loose' :
+                        ord.status === 'pending' ? 'badge-blister' : 'badge-danger'
                       }`} style={{ fontSize: '0.6rem' }}>
+                        {ord.status === 'pending' && 'Devis en attente'}
                         {ord.status === 'paid' && 'Payé'}
                         {ord.status === 'shipped' && 'Expédié'}
                         {ord.status === 'delivered' && 'Livré'}
+                        {ord.status === 'cancelled' && 'Annulé'}
                       </span>
                     </div>
 
@@ -1260,18 +1271,23 @@ function ProfilePageContent() {
                             height: '20px',
                             borderRadius: '50%',
                             backgroundColor: '#060713',
-                            border: '2px solid var(--color-cyan)',
+                            border: `2px solid ${ord.status !== 'pending' ? 'var(--color-cyan)' : '#1b1d30'}`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: '0.6rem',
-                            color: 'var(--color-cyan)',
+                            color: ord.status !== 'pending' ? 'var(--color-cyan)' : 'var(--text-muted)',
                             fontWeight: 'bold',
-                            boxShadow: '0 0 8px rgba(0, 225, 255, 0.4)'
+                            boxShadow: ord.status !== 'pending' ? '0 0 8px rgba(0, 225, 255, 0.4)' : 'none'
                           }}>
-                            <Check size={10} />
+                            {ord.status !== 'pending' ? <Check size={10} /> : '1'}
                           </div>
-                          <span style={{ fontSize: '0.65rem', marginTop: '0.25rem', color: 'var(--color-cyan)', fontWeight: 'bold' }}>Payé</span>
+                          <span style={{ 
+                            fontSize: '0.65rem', 
+                            marginTop: '0.25rem', 
+                            color: ord.status !== 'pending' ? 'var(--color-cyan)' : 'var(--text-muted)', 
+                            fontWeight: ord.status !== 'pending' ? 'bold' : 'normal' 
+                          }}>Payé</span>
                         </div>
 
                         {/* Step 2: Shipped */}
@@ -1375,9 +1391,28 @@ function ProfilePageContent() {
                         <div style={{ width: '60px', height: '45px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', backgroundColor: '#03040c', border: '1px solid var(--border-color)' }}>
                           <img src={ord.product_image} alt={ord.product_title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
-                        <div>
+                        <div style={{ flex: 1 }}>
                           <h4 style={{ fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>{ord.product_title}</h4>
-                          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Livraison : {ord.delivery_method}</p>
+                          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Livraison : {renderDeliveryMethod(ord.delivery_method)}</p>
+                          {ord.delivery_method.startsWith('DEVIS_PENDING|') && (() => {
+                            try {
+                              const productsList = JSON.parse(ord.delivery_method.split('|')[1]);
+                              return (
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.5rem', borderLeft: '2px solid rgba(0,225,255,0.3)', paddingLeft: '0.5rem' }}>
+                                  <span style={{ fontWeight: 700, display: 'block', marginBottom: '0.25rem', color: 'var(--color-cyan)', fontSize: '0.65rem', textTransform: 'uppercase' }}>Modèles demandés :</span>
+                                  <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+                                    {productsList.map((p: any, idx: number) => (
+                                      <li key={idx} style={{ marginBottom: '0.15rem' }}>
+                                        • {p.title} ({p.price.toFixed(2)} €)
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              );
+                            } catch (e) {
+                              return null;
+                            }
+                          })()}
                         </div>
                       </div>
                       
@@ -1429,11 +1464,14 @@ function ProfilePageContent() {
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Commande : #{sale.id.substring(0,8).toUpperCase()}</span>
                         <span className={`badge ${
                           sale.status === 'paid' ? 'badge-success' :
-                          sale.status === 'shipped' ? 'badge-loose' : 'badge-blister'
+                          sale.status === 'shipped' ? 'badge-loose' :
+                          sale.status === 'pending' ? 'badge-blister' : 'badge-danger'
                         }`} style={{ fontSize: '0.65rem' }}>
+                          {sale.status === 'pending' && 'Devis à évaluer'}
                           {sale.status === 'paid' && 'Payé'}
                           {sale.status === 'shipped' && 'Expédié'}
                           {sale.status === 'delivered' && 'Livré'}
+                          {sale.status === 'cancelled' && 'Annulé'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: '1rem' }}>
@@ -1441,10 +1479,29 @@ function ProfilePageContent() {
                           <div style={{ width: '60px', height: '45px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', backgroundColor: '#03040c', border: '1px solid var(--border-color)' }}>
                             <img src={sale.product_image} alt={sale.product_title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </div>
-                          <div>
+                          <div style={{ flex: 1 }}>
                             <h4 style={{ fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>{sale.product_title}</h4>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Livraison : {sale.delivery_method} • Date : {new Date(sale.created_at).toLocaleDateString('fr-FR')}</p>
-                            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: '1.3' }}>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Livraison : {renderDeliveryMethod(sale.delivery_method)} • Date : {new Date(sale.created_at).toLocaleDateString('fr-FR')}</p>
+                            {sale.delivery_method.startsWith('DEVIS_PENDING|') && (() => {
+                              try {
+                                const productsList = JSON.parse(sale.delivery_method.split('|')[1]);
+                                return (
+                                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.5rem', borderLeft: '2px solid rgba(228,47,153,0.3)', paddingLeft: '0.5rem' }}>
+                                    <span style={{ fontWeight: 700, display: 'block', marginBottom: '0.25rem', color: 'var(--color-magenta)', fontSize: '0.65rem', textTransform: 'uppercase' }}>Modèles demandés :</span>
+                                    <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+                                      {productsList.map((p: any, idx: number) => (
+                                        <li key={idx} style={{ marginBottom: '0.15rem' }}>
+                                          • {p.title} ({p.price.toFixed(2)} €)
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                );
+                              } catch (e) {
+                                return null;
+                              }
+                            })()}
+                            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: '1.3', marginTop: '0.5rem' }}>
                               Client : {sale.shipping_address.fullName}<br/>
                               Adresse : {sale.shipping_address.addressLine1}, {sale.shipping_address.postalCode} {sale.shipping_address.city}
                             </p>
