@@ -1569,6 +1569,36 @@ function ProfilePageContent() {
                               Tél : <strong>{sale.shipping_address.phone || 'Non renseigné'}</strong><br/>
                               Adresse : {sale.shipping_address.addressLine1}, {sale.shipping_address.postalCode} {sale.shipping_address.city}, {sale.shipping_address.country}
                             </p>
+                            <div style={{ marginTop: '0.5rem' }}>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                style={{
+                                  padding: '0.25rem 0.5rem',
+                                  fontSize: '0.65rem',
+                                  textTransform: 'none',
+                                  fontStyle: 'normal',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.25rem',
+                                  borderRadius: 'var(--radius-sm)',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.03)'
+                                }}
+                                onClick={() => {
+                                  const textToCopy = `Nom : ${sale.shipping_address.fullName}\n` +
+                                                     `Tél : ${sale.shipping_address.phone || 'Non renseigné'}\n` +
+                                                     `Email : ${sale.buyer_email}\n` +
+                                                     `Adresse : ${sale.shipping_address.addressLine1}\n` +
+                                                     `Code Postal : ${sale.shipping_address.postalCode}\n` +
+                                                     `Ville : ${sale.shipping_address.city}\n` +
+                                                     `Pays : ${sale.shipping_address.country}`;
+                                  navigator.clipboard.writeText(textToCopy);
+                                  showToast('Informations copiées avec succès !', 'success');
+                                }}
+                              >
+                                📋 Copier le bordereau de livraison
+                              </button>
+                            </div>
                           </div>
                         </div>
                         <span style={{ fontWeight: 800, color: 'var(--color-magenta)', fontSize: '1.1rem' }}>
