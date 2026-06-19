@@ -458,8 +458,7 @@ function ProfilePageContent() {
       // Notify newsletter subscribers
       if (notifyNewsletter) {
         try {
-          const rawSubs = localStorage.getItem('newsletter_subscribers');
-          const subscribers: string[] = rawSubs ? JSON.parse(rawSubs) : [];
+          const subscribers = await db.getNewsletterSubscribers();
           subscribers.forEach(email => {
             fetch('/api/send-email', {
               method: 'POST',

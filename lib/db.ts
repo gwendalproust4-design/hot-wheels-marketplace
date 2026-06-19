@@ -394,5 +394,37 @@ export const db = {
       return;
     }
     mockDb.togglePinProduct(productId);
+  },
+
+  subscribeNewsletter: async (email: string): Promise<void> => {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase
+          .from('newsletter_subscribers')
+          .insert([{ email }]);
+        if (!error) return;
+        console.warn('Supabase newsletter insert failed, falling back to localStorage:', error);
+      } catch (err) {
+        console.warn('Supabase newsletter insert exception, falling back to localStorage:', err);
+      }
+    }
+    mockDb.subscribeNewsletter(email);
+  },
+
+  getNewsletterSubscribers: async (): Promise<string[]> => {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('newsletter_subscribers')
+          .select('email');
+        if (!error && data) {
+          return data.map((row: any) => row.email);
+        }
+        console.warn('Supabase newsletter select failed, falling back to localStorage:', error);
+      } catch (err) {
+        console.warn('Supabase newsletter select exception, falling back to localStorage:', err);
+      }
+    }
+    return mockDb.getNewsletterSubscribers();
   }
 };

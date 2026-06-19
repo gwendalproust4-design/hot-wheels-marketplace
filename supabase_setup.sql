@@ -162,3 +162,18 @@ ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Favorites are manage-only by owner" ON public.favorites;
 CREATE POLICY "Favorites are manage-only by owner" ON public.favorites FOR ALL USING (auth.uid() = user_id);
+
+
+-- 8. Newsletter Subscribers Table
+CREATE TABLE IF NOT EXISTS public.newsletter_subscribers (
+    email TEXT PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can insert subscriber" ON public.newsletter_subscribers;
+CREATE POLICY "Anyone can insert subscriber" ON public.newsletter_subscribers FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Anyone can read subscribers" ON public.newsletter_subscribers;
+CREATE POLICY "Anyone can read subscribers" ON public.newsletter_subscribers FOR SELECT USING (true);

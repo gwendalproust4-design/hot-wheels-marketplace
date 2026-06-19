@@ -60,13 +60,8 @@ export default function Home() {
     if (!newsletterEmail) return;
     setSubmittingNewsletter(true);
     try {
-      // 1. Save in local storage
-      const rawSubs = localStorage.getItem('newsletter_subscribers');
-      const subscribers: string[] = rawSubs ? JSON.parse(rawSubs) : [];
-      if (!subscribers.includes(newsletterEmail)) {
-        subscribers.push(newsletterEmail);
-        localStorage.setItem('newsletter_subscribers', JSON.stringify(subscribers));
-      }
+      // 1. Save in database
+      await db.subscribeNewsletter(newsletterEmail);
 
       // 2. Trigger send-email API
       await fetch('/api/send-email', {

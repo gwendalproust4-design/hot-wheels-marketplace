@@ -362,5 +362,24 @@ export const mockDb = {
       products[index].is_pinned = !currentPinned;
       mockDb.setProducts(products);
     }
+  },
+
+  subscribeNewsletter: (email: string) => {
+    if (typeof window !== 'undefined') {
+      const rawSubs = localStorage.getItem('newsletter_subscribers');
+      const subscribers: string[] = rawSubs ? JSON.parse(rawSubs) : [];
+      if (!subscribers.includes(email)) {
+        subscribers.push(email);
+        localStorage.setItem('newsletter_subscribers', JSON.stringify(subscribers));
+      }
+    }
+  },
+
+  getNewsletterSubscribers: () => {
+    if (typeof window !== 'undefined') {
+      const rawSubs = localStorage.getItem('newsletter_subscribers');
+      return rawSubs ? JSON.parse(rawSubs) : [];
+    }
+    return [];
   }
 };
