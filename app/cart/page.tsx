@@ -35,7 +35,8 @@ export default function CartPage() {
     addressLine1: '',
     city: '',
     postalCode: '',
-    country: 'France'
+    country: 'France',
+    phone: ''
   });
   const [checkingOut, setCheckingOut] = useState(false);
 
@@ -63,8 +64,8 @@ export default function CartPage() {
       return;
     }
 
-    if (!address.fullName || !address.addressLine1 || !address.city || !address.postalCode) {
-      showToast('Veuillez remplir toutes les informations de livraison', 'error');
+    if (!address.fullName || !address.addressLine1 || !address.city || !address.postalCode || !address.phone) {
+      showToast('Veuillez remplir toutes les informations de livraison, y compris le numéro de téléphone', 'error');
       return;
     }
 
@@ -301,6 +302,19 @@ export default function CartPage() {
                 placeholder="Lucas Dubois"
                 required 
                 value={address.fullName}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Numéro de téléphone</label>
+              <input 
+                type="tel" 
+                name="phone" 
+                className="form-input" 
+                placeholder="Ex : 06 12 34 56 78"
+                required 
+                value={address.phone}
                 onChange={handleInputChange}
               />
             </div>

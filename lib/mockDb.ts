@@ -45,6 +45,7 @@ export interface Order {
     city: string;
     postalCode: string;
     country: string;
+    phone?: string;
   };
   tracking_number?: string;
   carrier?: string;

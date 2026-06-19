@@ -313,6 +313,7 @@ function ProfilePageContent() {
     rating: 5,
     comment: ''
   });
+  const [notifyNewsletter, setNotifyNewsletter] = useState(true);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -455,43 +456,45 @@ function ProfilePageContent() {
       showToast('Annonce miniature publiée avec succès !', 'success');
 
       // Notify newsletter subscribers
-      try {
-        const rawSubs = localStorage.getItem('newsletter_subscribers');
-        const subscribers: string[] = rawSubs ? JSON.parse(rawSubs) : [];
-        subscribers.forEach(email => {
-          fetch('/api/send-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              to: email,
-              subject: `Nouvel ajout : ${productPayload.title} ! 🚗`,
-              html: `
-                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; background-color: #060713; color: #ffffff; border: 1px solid #1b1d30; border-radius: 8px;">
-                  <h2 style="color: #00efff; text-align: center; text-transform: uppercase; margin-bottom: 1.5rem;">Nouveauté au catalogue</h2>
-                  <p>Bonjour,</p>
-                  <p>Un nouveau modèle vient d'être mis en ligne sur la Bourse d'Échanges :</p>
-                  
-                  <div style="background-color: #0c0e1e; border: 1px solid #1b1d30; padding: 1.5rem; border-radius: 6px; margin: 1.5rem 0; text-align: center;">
-                    <img src="${productPayload.images[0]}" alt="${productPayload.title}" style="max-width: 240px; max-height: 180px; border-radius: 4px; margin-bottom: 1rem; object-fit: contain;" />
-                    <h3 style="color: #ffffff; margin: 0 0 0.5rem 0; font-size: 1.25rem;">${productPayload.title}</h3>
-                    <p style="color: #ff007f; font-weight: bold; margin: 0 0 0.5rem 0; font-size: 1.35rem;">${productPayload.price.toFixed(2)} €</p>
-                    <p style="color: #a3acb9; margin: 0; font-size: 0.85rem;">Série : ${productPayload.series} • Année : ${productPayload.year} • État : ${productPayload.condition === 'blister' ? 'Sous Blister' : 'Loose'}</p>
+      if (notifyNewsletter) {
+        try {
+          const rawSubs = localStorage.getItem('newsletter_subscribers');
+          const subscribers: string[] = rawSubs ? JSON.parse(rawSubs) : [];
+          subscribers.forEach(email => {
+            fetch('/api/send-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: email,
+                subject: `Nouvel ajout : ${productPayload.title} ! 🚗`,
+                html: `
+                  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; background-color: #060713; color: #ffffff; border: 1px solid #1b1d30; border-radius: 8px;">
+                    <h2 style="color: #00efff; text-align: center; text-transform: uppercase; margin-bottom: 1.5rem;">Nouveauté au catalogue</h2>
+                    <p>Bonjour,</p>
+                    <p>Un nouveau modèle vient d'être mis en ligne sur la Bourse d'Échanges :</p>
+                    
+                    <div style="background-color: #0c0e1e; border: 1px solid #1b1d30; padding: 1.5rem; border-radius: 6px; margin: 1.5rem 0; text-align: center;">
+                      <img src="${productPayload.images[0]}" alt="${productPayload.title}" style="max-width: 240px; max-height: 180px; border-radius: 4px; margin-bottom: 1rem; object-fit: contain;" />
+                      <h3 style="color: #ffffff; margin: 0 0 0.5rem 0; font-size: 1.25rem;">${productPayload.title}</h3>
+                      <p style="color: #ff007f; font-weight: bold; margin: 0 0 0.5rem 0; font-size: 1.35rem;">${productPayload.price.toFixed(2)} €</p>
+                      <p style="color: #a3acb9; margin: 0; font-size: 0.85rem;">Série : ${productPayload.series} • Année : ${productPayload.year} • État : ${productPayload.condition === 'blister' ? 'Sous Blister' : 'Loose'}</p>
+                    </div>
+                    
+                    <p>Ne tardez pas à vous connecter pour acheter ce modèle en direct ou faire une offre de devis au vendeur !</p>
+                    <div style="text-align: center; margin-top: 2rem; margin-bottom: 1rem;">
+                      <a href="${window.location.origin}/" style="background-color: #00efff; color: #000000; padding: 0.8rem 1.75rem; border-radius: 4px; text-decoration: none; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; display: inline-block;">Découvrir l'annonce</a>
+                    </div>
+                    
+                    <hr style="border: 0; border-top: 1px solid #1b1d30; margin: 2rem 0;" />
+                    <p style="font-size: 0.8rem; color: #a3acb9; text-align: center;">Placeholder Collector - La plateforme ultime de miniatures de collection</p>
                   </div>
-                  
-                  <p>Ne tardez pas à vous connecter pour acheter ce modèle en direct ou faire une offre de devis au vendeur !</p>
-                  <div style="text-align: center; margin-top: 2rem; margin-bottom: 1rem;">
-                    <a href="${window.location.origin}/" style="background-color: #00efff; color: #000000; padding: 0.8rem 1.75rem; border-radius: 4px; text-decoration: none; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; display: inline-block;">Découvrir l'annonce</a>
-                  </div>
-                  
-                  <hr style="border: 0; border-top: 1px solid #1b1d30; margin: 2rem 0;" />
-                  <p style="font-size: 0.8rem; color: #a3acb9; text-align: center;">Placeholder Collector - La plateforme ultime de miniatures de collection</p>
-                </div>
-              `
-            })
-          }).catch(err => console.error('Error sending email to subscriber:', email, err));
-        });
-      } catch (err) {
-        console.error('Failed to notify newsletter subscribers:', err);
+                `
+              })
+            }).catch(err => console.error('Error sending email to subscriber:', email, err));
+          });
+        } catch (err) {
+          console.error('Failed to notify newsletter subscribers:', err);
+        }
       }
       
       setProductForm({
@@ -1051,6 +1054,25 @@ function ProfilePageContent() {
                   />
                 </div>
 
+                {/* Newsletter notification checkbox */}
+                <div className="form-group flex items-center gap-2" style={{ cursor: 'pointer', userSelect: 'none', margin: '1.25rem 0' }}>
+                  <input 
+                    type="checkbox" 
+                    id="notifyNewsletter" 
+                    checked={notifyNewsletter}
+                    onChange={(e) => setNotifyNewsletter(e.target.checked)}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      cursor: 'pointer',
+                      accentColor: 'var(--color-cyan)'
+                    }}
+                  />
+                  <label htmlFor="notifyNewsletter" style={{ fontSize: '0.85rem', color: '#fff', cursor: 'pointer', fontWeight: 600 }}>
+                    Informer les abonnés inscrits à la newsletter de cet ajout (Envoi d'e-mails)
+                  </label>
+                </div>
+
                 {/* Local photo uploader block */}
                 <div className="form-group">
                   <label className="form-label">Photos du modèle (Max 3)</label>
@@ -1541,9 +1563,11 @@ function ProfilePageContent() {
                                 return null;
                               }
                             })()}
-                            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: '1.3', marginTop: '0.5rem' }}>
-                              Client : {sale.shipping_address.fullName}<br/>
-                              Adresse : {sale.shipping_address.addressLine1}, {sale.shipping_address.postalCode} {sale.shipping_address.city}
+                            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: '1.4', marginTop: '0.5rem' }}>
+                              Client : <strong>{sale.shipping_address.fullName}</strong><br/>
+                              Email : <a href={`mailto:${sale.buyer_email}`} style={{ color: 'var(--color-cyan)', textDecoration: 'underline' }}>{sale.buyer_email}</a><br/>
+                              Tél : <strong>{sale.shipping_address.phone || 'Non renseigné'}</strong><br/>
+                              Adresse : {sale.shipping_address.addressLine1}, {sale.shipping_address.postalCode} {sale.shipping_address.city}, {sale.shipping_address.country}
                             </p>
                           </div>
                         </div>
