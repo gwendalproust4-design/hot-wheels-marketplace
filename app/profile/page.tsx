@@ -329,12 +329,12 @@ function ProfilePageContent() {
         const allProducts = await db.getProducts();
         setProducts(allProducts.filter(p => p.seller_id === user.id));
         const sellerSales = await db.getSales(user.id);
-        setSales(sellerSales);
+        setSales([...sellerSales].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
         const buyerOrders = await db.getOrders(user.id);
-        setOrders(buyerOrders);
+        setOrders([...buyerOrders].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
       } else {
         const buyerOrders = await db.getOrders(user.id);
-        setOrders(buyerOrders);
+        setOrders([...buyerOrders].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
 
         // Load favorites
         const allProducts = await db.getProducts();
