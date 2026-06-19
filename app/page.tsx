@@ -11,6 +11,11 @@ import { Search, Plus, ShoppingCart, Sparkles, Shield, Truck, MessageSquare, Sen
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [heroAspectRatio, setHeroAspectRatio] = useState<number>(1.6);
+
+  useEffect(() => {
+    setHeroAspectRatio(1.6);
+  }, [products]);
   
   // Search & Filter state
   const [search, setSearch] = useState('');
@@ -130,14 +135,15 @@ export default function Home() {
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <div className="slant-cut" style={{
                 width: '100%',
-                maxWidth: '420px',
-                aspectRatio: '16/10',
+                maxWidth: heroAspectRatio < 1.0 ? '300px' : '420px',
+                aspectRatio: heroAspectRatio,
                 height: 'auto',
                 backgroundColor: '#03040a',
                 border: '2px solid var(--color-crimson)',
                 boxShadow: '0 0 30px rgba(47, 47, 228, 0.25)',
                 overflow: 'hidden',
-                borderRadius: 'var(--radius-md)'
+                borderRadius: 'var(--radius-md)',
+                transition: 'all var(--transition-normal)'
               }}>
                 <div className="slant-cut-child" style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {/* Blurred background clone to handle portrait/landscape nicely */}
@@ -160,10 +166,16 @@ export default function Home() {
                   <img 
                     src={featuredProduct.images[0]} 
                     alt={featuredProduct.title} 
+                    onLoad={(e) => {
+                      const img = e.currentTarget;
+                      if (img.naturalWidth && img.naturalHeight) {
+                        setHeroAspectRatio(img.naturalWidth / img.naturalHeight);
+                      }
+                    }}
                     style={{ 
                       width: '100%', 
                       height: '100%', 
-                      objectFit: 'contain',
+                      objectFit: 'cover',
                       position: 'relative',
                       zIndex: 2
                     }}
