@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Confirmez votre compte Placeholder</title>
+  <style>
+    body {
+      background-color: #080616;
+      color: #ffffff;
+      font-family: 'Space Grotesk', -apple-system, sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+    }
+    .card {
+      background-color: #162e93;
+      border: 1px solid #243ebf;
+      border-radius: 8px;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(47, 47, 228, 0.2);
+    }
+    h1 {
+      color: #ffffff;
+      font-size: 24px;
+      margin-bottom: 20px;
+      font-weight: 800;
+    }
+    p {
+      color: #c2c9e3;
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+    .btn {
+      background: linear-gradient(135deg, #2f2fe4 0%, #162e93 100%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff !important;
+      display: inline-block;
+      font-weight: bold;
+      padding: 12px 30px;
+      text-decoration: none;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .footer {
+      color: #5e668a;
+      font-size: 12px;
+      margin-top: 40px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div style="font-size: 40px; margin-bottom: 10px;">🚗</div>
+    <h1>CONFIRMEZ VOTRE INSCRIPTION</h1>
+    <p>
+      Bienvenue dans le club <strong>Placeholder</strong> !<br>
+      Vous êtes à un clic d'accéder à la bourse d'échange ultime de miniatures de collection.
+    </p>
+    <a href="{{ .ConfirmationURL }}" class="btn">Activer mon compte</a>
+    <p class="footer">
+      Si vous n'avez pas demandé cette inscription, vous pouvez ignorer cet e-mail.<br>
+      Placeholder Collector &copy; 2026
+    </p>
+  </div>
+</body>
+</html>

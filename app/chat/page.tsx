@@ -1,0 +1,393 @@
+'use client';
+
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
+import { db } from '@/lib/db';
+import { mockDb, Message, Product, Profile } from '@/lib/mockDb';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Send, MessageSquare, Bookmark } from 'lucide-react';
+
+interface ChatChannel {
+  productId: string;
+  otherUserId: string;
+  product: Product;
+  otherProfile: Profile;
+  lastMessage: Message;
+}
+
+function ChatPageContent() {
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [channels, setChannels] = useState<ChatChannel[]>([]);
+  const [activeChannel, setActiveChannel] = useState<{ productId: string; otherUserId: string } | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const hasAutoSelected = useRef(false);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const loadChannels = async () => {
+    if (!user) return;
+    try {
+      const allMessages = await db.getMessages(user.id);
+      
+      const channelMap = new Map<string, Message[]>();
+      allMessages.forEach((msg) => {
+        const otherId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
+        const key = `${msg.product_id}:${otherId}`;
+        const existing = channelMap.get(key) || [];
+        existing.push(msg);
+        channelMap.set(key, existing);
+      });
+
+      const loadedChannels: ChatChannel[] = [];
+      const allProducts = await db.getProducts();
+      
+      // profiles query
+      const allProfiles = mockDb.getProfiles(); // mock profiles fallback
+
+      for (const [key, msgs] of Array.from(channelMap.entries())) {
+        const [productId, otherUserId] = key.split(':');
+        const product = allProducts.find(p => p.id === productId) || mockDb.getProducts().find(p => p.id === productId);
+        const otherProfile = allProfiles.find(p => p.id === otherUserId) || {
+          id: otherUserId,
+          username: 'collector_club',
+          full_name: 'Collectionneur',
+          avatar_url: '',
+          role: 'buyer',
+          created_at: ''
+        } as Profile;
+        
+        const sortedMsgs = msgs.sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        const lastMessage = sortedMsgs[sortedMsgs.length - 1];
+
+        if (product) {
+          loadedChannels.push({
+            productId,
+            otherUserId,
+            product,
+            otherProfile,
+            lastMessage
+          });
+        }
+      }
+
+      loadedChannels.sort((a,b) => new Date(b.lastMessage.created_at).getTime() - new Date(a.lastMessage.created_at).getTime());
+      setChannels(loadedChannels);
+      
+      const queryProductId = searchParams.get('productId');
+      const queryRecipientId = searchParams.get('recipientId');
+      if (queryProductId && queryRecipientId && !activeChannel) {
+        setActiveChannel({ productId: queryProductId, otherUserId: queryRecipientId });
+        hasAutoSelected.current = true;
+      } else if (loadedChannels.length > 0 && !activeChannel && !hasAutoSelected.current && typeof window !== 'undefined' && window.innerWidth > 768) {
+        setActiveChannel({ productId: loadedChannels[0].productId, otherUserId: loadedChannels[0].otherUserId });
+        hasAutoSelected.current = true;
+      }
+    } catch (err) {
+      console.error('Error loading chat channels:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMessages = async () => {
+    if (!user || !activeChannel) return;
+    try {
+      const allMessages = await db.getMessages(user.id);
+      const activeMsgs = allMessages.filter(
+        m => m.product_id === activeChannel.productId &&
+        ((m.sender_id === user.id && m.receiver_id === activeChannel.otherUserId) ||
+         (m.sender_id === activeChannel.otherUserId && m.receiver_id === user.id))
+      );
+      const sorted = activeMsgs.sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      setMessages(sorted);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    loadChannels();
+  }, [user, searchParams]);
+
+  useEffect(() => {
+    loadMessages();
+    setTimeout(scrollToBottom, 100);
+  }, [activeChannel, user]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadMessages();
+      loadChannels();
+    }, 2000);
+
+    const handleNewMessage = () => {
+      loadMessages();
+      loadChannels();
+      setTimeout(scrollToBottom, 100);
+    };
+
+    window.addEventListener('hw_new_message', handleNewMessage);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('hw_new_message', handleNewMessage);
+    };
+  }, [activeChannel, user]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !activeChannel || !inputText.trim()) return;
+
+    setSending(true);
+    try {
+      await db.sendMessage({
+        sender_id: user.id,
+        receiver_id: activeChannel.otherUserId,
+        product_id: activeChannel.productId,
+        content: inputText.trim()
+      });
+      
+      setInputText('');
+      await loadMessages();
+      await loadChannels();
+      setTimeout(scrollToBottom, 50);
+    } catch (err) {
+      console.error(err);
+      showToast("Erreur lors de l'envoi", 'error');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="container" style={{ padding: '4rem 1.5rem', textAlign: 'center' }}>
+        <div className="card card-glass" style={{ maxWidth: '600px', margin: '0 auto', padding: '3rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+            <MessageSquare size={48} className="logo-cyan" />
+          </div>
+          <h2 style={{ marginBottom: '1rem' }}>Messagerie indisponible</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Vous devez vous connecter à votre compte pour discuter avec les autres membres.</p>
+          <Link href="/profile" className="btn btn-primary">Se Connecter</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const currentChannelDetail = channels.find(
+    c => c.productId === activeChannel?.productId && c.otherUserId === activeChannel?.otherUserId
+  );
+
+  return (
+    <div className="container">
+      <h1 className="page-title" style={{ marginBottom: '2rem' }}>
+        Messagerie <span className="neon-gradient-text">Live</span>
+      </h1>
+
+      <div className={`chat-grid ${activeChannel ? 'channel-active' : ''}`} style={{
+        height: 'calc(100vh - 200px)',
+        minHeight: '500px',
+        backgroundColor: 'var(--bg-secondary)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-color)',
+        overflow: 'hidden'
+      }}>
+        {/* Sidebar: Conversations List */}
+        <div className="chat-sidebar" style={{
+          borderRight: '1px solid var(--border-color)',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: 'var(--bg-primary)'
+        }}>
+          <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--border-color)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.8rem', color: 'var(--color-cyan)' }}>
+            Discussions
+          </div>
+          
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {channels.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                Aucune conversation active.
+              </div>
+            ) : (
+              channels.map((chan) => {
+                const isActive = activeChannel?.productId === chan.productId && activeChannel?.otherUserId === chan.otherUserId;
+                return (
+                  <button
+                    key={`${chan.productId}:${chan.otherUserId}`}
+                    onClick={() => setActiveChannel({ productId: chan.productId, otherUserId: chan.otherUserId })}
+                    style={{
+                      width: '100%',
+                      padding: '1.25rem 1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      textAlign: 'left',
+                      borderBottom: '1px solid var(--border-color)',
+                      backgroundColor: isActive ? 'rgba(0, 240, 255, 0.06)' : 'transparent',
+                      transition: 'all var(--transition-fast)'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-cyan)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                      <span style={{ fontSize: '0.85rem' }}>{chan.otherProfile.username.substring(0, 2).toUpperCase()}</span>
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="flex justify-between items-baseline">
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: isActive ? 'var(--color-cyan)' : '#fff', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          @{chan.otherProfile.username}
+                        </h4>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                          {new Date(chan.lastMessage.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '0.8rem', color: '#fff', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontWeight: 600, marginTop: '0.1rem' }}>
+                        {chan.product.title}
+                      </p>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        {chan.lastMessage.sender_id === user.id ? 'Vous: ' : ''}{chan.lastMessage.content}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Right: Active Chat Area */}
+        {activeChannel && currentChannelDetail ? (
+          <div className="chat-area" style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: 'var(--bg-secondary)' }}>
+            {/* Header: Chat partner and product badge */}
+            <div className="flex justify-between items-center" style={{
+              padding: '1rem 1.5rem',
+              borderBottom: '1px solid var(--border-color)',
+              backgroundColor: 'var(--bg-primary)',
+              flexWrap: 'wrap',
+              gap: '0.5rem'
+            }}>
+              <div>
+                <button 
+                  onClick={() => setActiveChannel(null)} 
+                  className="mobile-back-button"
+                >
+                  ← Discussions
+                </button>
+                <h3 style={{ fontWeight: 700, fontSize: '1rem', color: '#fff' }}>@{currentChannelDetail.otherProfile.username}</h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Annonce : <strong>{currentChannelDetail.product.title}</strong></p>
+              </div>
+
+              {/* Mini product link */}
+              <Link href={`/products/${currentChannelDetail.product.id}`} className="card-glass flex items-center gap-2" style={{
+                padding: '0.4rem 0.8rem',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-color)',
+                fontSize: '0.75rem'
+              }}>
+                <Bookmark size={12} className="logo-cyan" />
+                <span style={{ fontWeight: 700, color: 'var(--color-magenta)' }}>{currentChannelDetail.product.price.toFixed(2)} €</span>
+              </Link>
+            </div>
+
+            {/* Message History bubble grid */}
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '1.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}>
+              {messages.map((msg) => {
+                const isSentByMe = msg.sender_id === user.id;
+                return (
+                  <div 
+                    key={msg.id} 
+                    className={`message-bubble ${isSentByMe ? 'sent' : 'received'}`}
+                  >
+                    <p style={{ fontSize: '0.9rem' }}>{msg.content}</p>
+                    <span style={{
+                      display: 'block',
+                      textAlign: 'right',
+                      fontSize: '0.6rem',
+                      color: 'rgba(255,255,255,0.6)',
+                      marginTop: '0.35rem',
+                      fontWeight: 600
+                    }}>
+                      {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Message input footer */}
+            <form onSubmit={handleSendMessage} style={{
+              padding: '1rem 1.5rem',
+              borderTop: '1px solid var(--border-color)',
+              backgroundColor: 'var(--bg-primary)'
+            }}>
+              <div className="flex gap-3 items-center">
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Écrivez votre message..."
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  required
+                  disabled={sending}
+                  style={{ borderRadius: 'var(--radius-sm)' }}
+                />
+                
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  style={{ padding: '0.75rem 1.25rem' }}
+                  disabled={sending || !inputText.trim()}
+                >
+                  <Send size={16} />
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, color: 'var(--text-muted)' }}>
+            <MessageSquare size={44} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+            <p style={{ fontSize: '0.9rem' }}>Sélectionnez une discussion pour commencer à chatter.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="container" style={{ padding: '4rem 0', textAlign: 'center' }}>
+        <p style={{ color: 'var(--text-secondary)' }}>Chargement des conversations...</p>
+      </div>
+    }>
+      <ChatPageContent />
+    </Suspense>
+  );
+}
