@@ -16,6 +16,18 @@ export default function Home() {
   useEffect(() => {
     setHeroAspectRatio(1.6);
   }, [products]);
+
+  useEffect(() => {
+    document.title = 'Bourse d\'Échanges de Hot Wheels Rares & Premium | Placeholder';
+    let metaDescription = document.querySelector('meta[name="description"]');
+    const descText = 'La plateforme de référence en France pour la revente de voitures miniatures Hot Wheels de collection. Retrouvez des modèles rares : Premium Boulevard, Red Line Club (RLC), Super Treasure Hunts (STH), Mainlines neuves sous blister ou loose.';
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', descText);
+  }, []);
   
   // Search & Filter state
   const [search, setSearch] = useState('');
@@ -63,6 +75,7 @@ export default function Home() {
 
   return (
     <div className="container">
+      <h1 className="sr-only">Bourse d'Échanges de Hot Wheels de Collection Rares | Premium, RLC, STH</h1>
       {/* Redesigned Showroom Hero */}
       {featuredProduct && (
         <section style={{
@@ -95,9 +108,9 @@ export default function Home() {
               <span className="badge badge-blister" style={{ marginBottom: '1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                 <Star size={12} fill="currentColor" /> Modèle Vedette du Showroom
               </span>
-              <h1 className="page-title" style={{ fontSize: '2.8rem', lineHeight: '1.1', marginBottom: '1rem' }}>
+              <h2 className="page-title" style={{ fontSize: '2.8rem', lineHeight: '1.1', marginBottom: '1rem', textTransform: 'none' }}>
                 {featuredProduct.title}
-              </h1>
+              </h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2rem' }}>
                 {featuredProduct.description}
               </p>

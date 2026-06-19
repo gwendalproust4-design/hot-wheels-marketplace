@@ -8,8 +8,8 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 import { Info, Sparkles } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Placeholder - Bourse d\'échange de voitures miniatures',
-  description: 'Trouvez, achetez et vendez vos voitures miniatures de collection. Filtrez par année, série, état (Blister/Loose) et échangez en direct.',
+  title: 'Bourse d\'Échanges de Hot Wheels Rares & Premium | Placeholder',
+  description: 'La plateforme e-commerce de référence en France pour l\'achat et la revente de miniatures Hot Wheels de collection : Premium, RLC, Super Treasure Hunts.',
 };
 
 export default function RootLayout({

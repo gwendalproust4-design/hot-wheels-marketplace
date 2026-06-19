@@ -53,6 +53,22 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
     loadProductAndReviews();
   }, [id, user]);
 
+  useEffect(() => {
+    if (product) {
+      document.title = `${product.title} - Hot Wheels de Collection ${product.condition === 'blister' ? 'sous Blister' : 'Loose'} | Placeholder`;
+      
+      let metaDescription = document.querySelector('meta[name="description"]');
+      const descText = `Achetez ${product.title} (${product.condition === 'blister' ? 'sous Blister' : 'Loose'}) de la série ${product.series} sorti en ${product.year}. Miniatures Hot Wheels rares de collection sur notre boutique secondaire.`;
+      
+      if (!metaDescription) {
+        metaDescription = document.createElement('meta');
+        metaDescription.setAttribute('name', 'description');
+        document.head.appendChild(metaDescription);
+      }
+      metaDescription.setAttribute('content', descText);
+    }
+  }, [product]);
+
   const handleToggleFavorite = async () => {
     if (!user) {
       showToast('Connectez-vous pour ajouter des favoris !', 'info');
@@ -139,8 +155,59 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
 
   const hasMultipleImages = product.images && product.images.length > 1;
 
+  // Build JSON-LD Structured Data Schema for Search Engines
+  const aggregateRating = reviews.length > 0 ? {
+    "@type": "AggregateRating",
+    "ratingValue": averageRating,
+    "reviewCount": reviews.length
+  } : undefined;
+
+  const reviewList = reviews.slice(0, 5).map(r => ({
+    "@type": "Review",
+    "author": {
+      "@type": "Person",
+      "name": r.reviewer_name
+    },
+    "datePublished": r.created_at,
+    "reviewBody": r.comment,
+    "reviewRating": {
+      "@type": "Rating",
+      "ratingValue": r.rating,
+      "bestRating": 5,
+      "worstRating": 1
+    }
+  }));
+
+  const schemaMarkup = product ? {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.title,
+    "image": product.images && product.images.length > 0 ? product.images : ['https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?auto=format&fit=crop&q=80&w=800'],
+    "description": product.description,
+    "sku": product.id,
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "EUR",
+      "price": product.price,
+      "itemCondition": product.condition === 'blister' ? "https://schema.org/NewCondition" : "https://schema.org/UsedCondition",
+      "availability": product.stock > 0 && product.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "seller": {
+        "@type": "Person",
+        "name": product.seller_name
+      }
+    },
+    ...(aggregateRating ? { aggregateRating } : {}),
+    ...(reviewList.length > 0 ? { "review": reviewList } : {})
+  } : null;
+
   return (
     <div className="container">
+      {schemaMarkup && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaMarkup) }}
+        />
+      )}
       <Link href="/" className="flex items-center gap-2" style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontWeight: 600 }}>
         <ArrowLeft size={16} />
         <span>Retour au catalogue</span>
