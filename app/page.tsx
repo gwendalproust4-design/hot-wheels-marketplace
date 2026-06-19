@@ -12,6 +12,8 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [heroAspectRatio, setHeroAspectRatio] = useState<number>(1.6);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [submittingNewsletter, setSubmittingNewsletter] = useState(false);
 
   useEffect(() => {
     setHeroAspectRatio(1.6);
@@ -53,6 +55,50 @@ export default function Home() {
     loadProducts();
   }, []);
 
+  const handleSubscribeNewsletter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail) return;
+    setSubmittingNewsletter(true);
+    try {
+      // 1. Save in local storage
+      const rawSubs = localStorage.getItem('newsletter_subscribers');
+      const subscribers: string[] = rawSubs ? JSON.parse(rawSubs) : [];
+      if (!subscribers.includes(newsletterEmail)) {
+        subscribers.push(newsletterEmail);
+        localStorage.setItem('newsletter_subscribers', JSON.stringify(subscribers));
+      }
+
+      // 2. Trigger send-email API
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: newsletterEmail,
+          subject: 'Bienvenue au Cercle des Collectionneurs Hot Wheels ! 🚗',
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; background-color: #060713; color: #ffffff; border: 1px solid #1b1d30; border-radius: 8px;">
+              <h2 style="color: #00efff; text-align: center; text-transform: uppercase;">Bienvenue au Cercle !</h2>
+              <p>Bonjour,</p>
+              <p>Merci pour votre inscription à notre newsletter d\'alertes privées.</p>
+              <p><strong>Vous recevrez désormais une alerte par email à chaque nouvel ajout de miniature rare au catalogue de la Bourse d\'Échanges.</strong></p>
+              <p>À très vite sur la boutique !</p>
+              <hr style="border: 0; border-top: 1px solid #1b1d30; margin: 2rem 0;" />
+              <p style="font-size: 0.8rem; color: #a3acb9; text-align: center;">Placeholder Collector - La plateforme ultime de miniatures de collection</p>
+            </div>
+          `
+        })
+      });
+
+      alert('Inscription enregistrée ! Un e-mail de confirmation vous a été envoyé.');
+      setNewsletterEmail('');
+    } catch (err) {
+      console.error(err);
+      alert("Une erreur est survenue lors de l\'inscription.");
+    } finally {
+      setSubmittingNewsletter(false);
+    }
+  };
+
   const uniqueSeries = Array.from(new Set(products.map(p => p.series)));
   const uniqueYears = Array.from(new Set(products.map(p => p.year.toString()))).sort((a,b) => b.localeCompare(a));
 
@@ -75,7 +121,9 @@ export default function Home() {
 
   return (
     <div className="container">
-      <h1 className="sr-only">Bourse d'Échanges de Hot Wheels de Collection Rares | Premium, RLC, STH</h1>
+      <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', border: 0 }}>
+        Bourse d'Échanges de Hot Wheels de Collection Rares | Premium, RLC, STH
+      </h1>
       {/* Redesigned Showroom Hero */}
       {featuredProduct && (
         <section style={{
@@ -487,9 +535,13 @@ export default function Home() {
         </h3>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '500px', margin: '0 auto 2rem auto', lineHeight: '1.6' }}>
           Inscrivez-vous à nos alertes privées pour recevoir en exclusivité les nouveaux arrivages de modèles miniatures rares dans notre boutique.
+          <br />
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: '0.5rem' }}>
+            * L'inscription à la newsletter implique de recevoir une notification automatique par email à chaque nouvel ajout de miniature au catalogue.
+          </span>
         </p>
 
-        <form onSubmit={(e) => { e.preventDefault(); alert('Inscription enregistrée ! Merci pour votre confiance.'); }} style={{
+        <form onSubmit={handleSubscribeNewsletter} style={{
           display: 'flex',
           maxWidth: '440px',
           margin: '0 auto',
@@ -502,11 +554,14 @@ export default function Home() {
             className="form-input" 
             placeholder="Saisissez votre email" 
             required 
+            value={newsletterEmail}
+            onChange={(e) => setNewsletterEmail(e.target.value)}
+            disabled={submittingNewsletter}
             style={{ flex: 1, minWidth: '240px', borderRadius: 'var(--radius-sm)' }}
           />
-          <button type="submit" className="btn btn-primary flex items-center gap-2">
+          <button type="submit" className="btn btn-primary flex items-center gap-2" disabled={submittingNewsletter}>
             <Send size={14} />
-            <span>S'inscrire</span>
+            <span>{submittingNewsletter ? 'Inscription...' : "S'inscrire"}</span>
           </button>
         </form>
       </section>
