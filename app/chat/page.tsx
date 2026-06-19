@@ -639,14 +639,17 @@ function ChatPageContent() {
             </div>
 
             {/* Message History bubble grid */}
-            <div style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '1.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem'
-            }}>
+            <div 
+              className="chat-messages-container"
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem'
+              }}
+            >
               {messages.map((msg) => {
                 const isSentByMe = msg.sender_id === user.id;
                 const isBasketQuote = msg.content.startsWith('[BASKET_QUOTE]:');
@@ -717,6 +720,24 @@ function ChatPageContent() {
           </div>
         )}
       </div>
+      <style>{`
+        .chat-messages-container::-webkit-scrollbar {
+          width: 6px !important;
+        }
+        .chat-messages-container::-webkit-scrollbar-track {
+          background: rgba(4, 5, 10, 0.35) !important;
+          border-radius: 9999px !important;
+        }
+        .chat-messages-container::-webkit-scrollbar-thumb {
+          background: var(--color-cyan) !important;
+          border-radius: 9999px !important;
+          box-shadow: 0 0 6px var(--color-cyan-glow) !important;
+        }
+        .chat-messages-container::-webkit-scrollbar-thumb:hover {
+          background: #ffffff !important;
+          box-shadow: 0 0 10px #ffffff !important;
+        }
+      `}</style>
     </div>
   );
 }
