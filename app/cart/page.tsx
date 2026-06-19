@@ -73,11 +73,9 @@ export default function CartPage() {
     if (isMultiProduct) {
       try {
         const primaryProduct = cartItems[0];
-        const orderId = 'ord-' + Math.random().toString(36).substr(2, 9);
         
-        // 1. Create a pending order with status pending
-        await db.createOrder({
-          id: orderId,
+        // 1. Create a pending order with status pending (let the DB generate the ID)
+        const createdOrder = await db.createOrder({
           buyer_id: user.id,
           seller_id: primaryProduct.seller_id,
           product_id: primaryProduct.id,
@@ -105,7 +103,7 @@ export default function CartPage() {
 
         // 3. Send quote message structure to live chat
         const msgContent = `[BASKET_QUOTE]:${JSON.stringify({
-          orderId: orderId,
+          orderId: createdOrder.id,
           items: cartItems.map(item => ({ id: item.id, title: item.title, price: item.price })),
           subtotal: itemsSubtotal,
           shippingAddress: address
