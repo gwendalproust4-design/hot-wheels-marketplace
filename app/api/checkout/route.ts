@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
       // Create Stripe Checkout Session
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
+        payment_method_types: ['card', 'paypal'],
         line_items: [
           {
             price_data: {
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
                 name: title || 'Hot Wheels Collectible',
                 images: stripeImages,
               },
-              unit_amount: Math.round(Number(price) * 100), // Stripe expects cents
+              unit_amount: Math.round(Number(totalPrice || price) * 100), // Stripe expects cents
             },
             quantity: 1,
           },
