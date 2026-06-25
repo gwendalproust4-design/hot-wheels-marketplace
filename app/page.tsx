@@ -196,7 +196,7 @@ export default function Home() {
                 {/* Float animation wrapper */}
                 <div className="hero-product-wrapper">
                   {/* High-end borderless glassmorphic showcase */}
-                  <div className="hero-product-image-container" style={{
+                  <div className="hero-product-image-container hero-image-wrapper" style={{
                     width: '100%',
                     maxWidth: heroAspectRatio < 1.1 ? '280px' : '420px',
                     aspectRatio: heroAspectRatio,

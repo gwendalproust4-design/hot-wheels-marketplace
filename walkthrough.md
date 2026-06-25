@@ -53,10 +53,23 @@ Comme le site est destiné à n'avoir qu'un seul vendeur qui ne réalise pas d'a
 
 ---
 
-## 6. Build de Production & Validation Git
+## 6. Améliorations de l'Ergonomie et de la Réactivité Mobile
+Pour répondre aux contraintes d'affichage sur les petits écrans :
+* **Réduction de l'image principale (Hero)** :
+  * Création et application de la classe CSS `.hero-image-wrapper` pour limiter dynamiquement la largeur maximale du conteneur de l'image à `180px` sur mobile (sous `@media (max-width: 768px)`).
+  * Réduction des paddings verticaux du Showcase (`.hero-showcase-container`) à `1rem 0.5rem` pour un affichage condensé et moderne sans encombrer la hauteur de l'écran.
+* **Refonte de la Messagerie Mobile (Chat)** :
+  * Fixation de la grille de chat (`.chat-grid`) en mode plein écran (`position: fixed`, collée de `top: 60px` à `bottom: 0`, `left: 0`, `right: 0`), ce qui masque proprement le pied de page et les titres de page pour offrir une expérience "application native" très fluide.
+  * Ajustement fixe de la hauteur de l'en-tête de navigation (`.header`) à `60px` sur mobile pour éliminer tout risque de décalage visuel.
+  * Utilisation de directives `!important` sur le masquage/affichage alternatif de la liste des discussions (`.chat-sidebar`) et du fil de discussion actif (`.chat-area`) pour corriger le conflit avec les styles Next.js/React inline.
+  * Optimisation des paddings de la zone de message et du formulaire d'envoi pour maximiser la lisibilité des textes sur petit écran.
+
+---
+
+## 7. Build de Production & Validation Git
 * **Compilation Next.js** : Le build de production est validé et fonctionnel :
   ```bash
-  ✓ Compiled successfully in 2.6s
+  ✓ Compiled successfully in 2.8s
   Running TypeScript ...
-  Finished TypeScript in 3.7s ...
+  Finished TypeScript in 4.9s ...
   ```

@@ -8,3 +8,7 @@
 - [x] Modifier [profile/page.tsx](file:///C:/Users/Gwendal/.gemini/antigravity/scratch/hot-wheels-marketplace/app/profile/page.tsx) (retirer tous les emojis photo, enveloppe, globe, check, sujet d'e-mails, intégrer des icônes Lucide)
 - [x] Modifier [checkout/mock-stripe/page.tsx](file:///C:/Users/Gwendal/.gemini/antigravity/scratch/hot-wheels-marketplace/app/checkout/mock-stripe/page.tsx) (retirer les emojis voiture et ampoule, intégrer Lucide Car/Info)
 - [x] Lancer un build de production Next.js pour valider les modifications
+- [x] Améliorer le responsive sur mobile :
+  - [x] Ajuster la taille de l'image principale (hero) sur la page d'accueil pour mobile
+  - [x] Rendre la messagerie (chat) fonctionnelle et ergonomique sur mobile (positionnement fixed, masquage correct de la sidebar/zone de chat active avec !important, ajustement de la hauteur de l'en-tête)
+
