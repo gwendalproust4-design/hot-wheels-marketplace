@@ -20,7 +20,7 @@ export default function Home() {
   }, [products]);
 
   useEffect(() => {
-    document.title = 'Bourse d\'Échanges de Hot Wheels Rares & Premium | Placeholder';
+    document.title = 'Bourse d\'Échanges de Hot Wheels Rares & Premium | Classicbug';
     let metaDescription = document.querySelector('meta[name="description"]');
     const descText = 'La plateforme de référence en France pour la revente de voitures miniatures Hot Wheels de collection. Retrouvez des modèles rares : Premium Boulevard, Red Line Club (RLC), Super Treasure Hunts (STH), Mainlines neuves sous blister ou loose.';
     if (!metaDescription) {
@@ -78,7 +78,7 @@ export default function Home() {
               <p><strong>Vous recevrez désormais une alerte par email à chaque nouvel ajout de miniature rare au catalogue de la Bourse d\'Échanges.</strong></p>
               <p>À très vite sur la boutique !</p>
               <hr style="border: 0; border-top: 1px solid #1b1d30; margin: 2rem 0;" />
-              <p style="font-size: 0.8rem; color: #a3acb9; text-align: center;">Placeholder Collector - La plateforme ultime de miniatures de collection</p>
+              <p style="font-size: 0.8rem; color: #a3acb9; text-align: center;">Classicbug - La plateforme ultime de miniatures de collection</p>
             </div>
           `
         })

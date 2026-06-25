@@ -485,7 +485,7 @@ function ProfilePageContent() {
                     </div>
                     
                     <hr style="border: 0; border-top: 1px solid #1b1d30; margin: 2rem 0;" />
-                    <p style="font-size: 0.8rem; color: #a3acb9; text-align: center;">Placeholder Collector - La plateforme ultime de miniatures de collection</p>
+                    <p style="font-size: 0.8rem; color: #a3acb9; text-align: center;">Classicbug - La plateforme ultime de miniatures de collection</p>
                   </div>
                 `
               })

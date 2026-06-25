@@ -5,10 +5,11 @@ import { ToastProvider } from '@/context/ToastContext';
 import { CartProvider } from '@/context/CartContext';
 import LayoutHeader from '@/components/LayoutHeader';
 import { isSupabaseConfigured } from '@/lib/supabase';
-import { Info, Sparkles } from 'lucide-react';
+import { Info, Sparkles, Car } from 'lucide-react';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Bourse d\'Échanges de Hot Wheels Rares & Premium | Placeholder',
+  title: 'Bourse d\'Échanges de Hot Wheels Rares & Premium | Classicbug',
   description: 'La plateforme e-commerce de référence en France pour l\'achat et la revente de miniatures Hot Wheels de collection : Premium, RLC, Super Treasure Hunts.',
 };
 
@@ -45,17 +46,41 @@ export default function RootLayout({
                 <footer style={{ 
                   backgroundColor: '#03040c', 
                   borderTop: '1px solid rgba(255, 255, 255, 0.05)', 
-                  padding: '2.5rem 0', 
-                  textAlign: 'center', 
-                  fontSize: '0.8rem', 
+                  padding: '3rem 0 2rem 0', 
+                  fontSize: '0.85rem', 
                   color: 'var(--text-muted)',
-                  letterSpacing: '0.05em'
                 }}>
-                  <div className="container">
-                    <p style={{ marginBottom: '0.5rem', fontWeight: 700, color: 'var(--color-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
-                      <Sparkles size={12} className="logo-cyan" /> <strong>PLACEHOLDER COLLECTOR</strong> - 2026
-                    </p>
-                    <p>La plateforme ultime de miniatures de collection. Intégration Supabase Database & Stripe Payments.</p>
+                  <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2.5rem', marginBottom: '2rem', textAlign: 'left' }}>
+                    <div>
+                      <h4 style={{ color: '#fff', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Car size={16} className="logo-cyan" /> CLASSICBUG
+                      </h4>
+                      <p style={{ fontSize: '0.8rem', lineHeight: '1.5' }}>
+                        La boutique de référence pour l'achat et la revente de voitures miniatures de collection Hot Wheels rares, sous blister ou loose.
+                      </p>
+                    </div>
+                    <div>
+                      <h4 style={{ color: '#fff', fontWeight: 700, marginBottom: '1rem' }}>Navigation</h4>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <li><Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>Catalogue</Link></li>
+                        <li><Link href="/cart" style={{ textDecoration: 'none', color: 'inherit' }}>Mon Panier</Link></li>
+                        <li><Link href="/profile" style={{ textDecoration: 'none', color: 'inherit' }}>Espace Collectionneur</Link></li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 style={{ color: '#fff', fontWeight: 700, marginBottom: '1rem' }}>Informations Légales</h4>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <li><Link href="/legal?tab=cgu" style={{ textDecoration: 'none', color: 'inherit' }}>Conditions Générales d'Utilisation (CGU)</Link></li>
+                        <li><Link href="/legal?tab=cgv" style={{ textDecoration: 'none', color: 'inherit' }}>Conditions Générales de Vente (CGV)</Link></li>
+                        <li><Link href="/legal?tab=mentions" style={{ textDecoration: 'none', color: 'inherit' }}>Mentions Légales</Link></li>
+                        <li><Link href="/legal?tab=confidentialite" style={{ textDecoration: 'none', color: 'inherit' }}>Politique de Confidentialité</Link></li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '1.5rem', textAlign: 'center', fontSize: '0.75rem' }}>
+                    <div className="container">
+                      <p>&copy; {new Date().getFullYear()} <strong>CLASSICBUG</strong>. Tous droits réservés.</p>
+                    </div>
                   </div>
                 </footer>
               </div>

@@ -192,7 +192,7 @@ function MockStripeContent() {
             </div>
 
             <div style={{ marginBottom: '2rem' }}>
-              <span style={{ color: '#697386', fontSize: '0.85rem', fontWeight: 600 }}>Payer Placeholder Collector</span>
+              <span style={{ color: '#697386', fontSize: '0.85rem', fontWeight: 600 }}>Payer Classicbug</span>
               <div style={{ fontSize: '2.25rem', fontWeight: 800, color: '#1a1f36', marginTop: '0.25rem' }}>
                 {totalPrice.toFixed(2)} €
               </div>

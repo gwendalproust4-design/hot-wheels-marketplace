@@ -16,8 +16,8 @@ export default function LayoutHeader() {
       <div className="container flex items-center justify-between">
         <Link href="/" className="logo">
           <Car className="logo-cyan" size={26} />
-          <span className="logo-place">Place</span>
-          <span className="logo-magenta">holder</span>
+          <span className="logo-place">Classic</span>
+          <span className="logo-magenta">bug</span>
         </Link>
 
         <nav className="header-nav flex items-center gap-6" style={{ fontWeight: 600 }}>

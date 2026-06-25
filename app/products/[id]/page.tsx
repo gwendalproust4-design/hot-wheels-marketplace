@@ -55,7 +55,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
 
   useEffect(() => {
     if (product) {
-      document.title = `${product.title} - Hot Wheels de Collection ${product.condition === 'blister' ? 'sous Blister' : 'Loose'} | Placeholder`;
+      document.title = `${product.title} - Hot Wheels de Collection ${product.condition === 'blister' ? 'sous Blister' : 'Loose'} | Classicbug`;
       
       let metaDescription = document.querySelector('meta[name="description"]');
       const descText = `Achetez ${product.title} (${product.condition === 'blister' ? 'sous Blister' : 'Loose'}) de la série ${product.series} sorti en ${product.year}. Miniatures Hot Wheels rares de collection sur notre boutique secondaire.`;
