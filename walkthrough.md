@@ -66,10 +66,22 @@ Pour répondre aux contraintes d'affichage sur les petits écrans :
 
 ---
 
-## 7. Build de Production & Validation Git
-* **Compilation Next.js** : Le build de production est validé et fonctionnel :
+## 7. Suppression de Conversations & Page d'Erreur 404 Premium
+* **Suppression des Conversations** :
+  * Ajout de la méthode `deleteConversation` dans `db.ts` pour effacer de la base de données tous les messages échangés pour une annonce spécifique.
+  * Intégration d'un bouton de suppression (icône Corbeille de Lucide) dans l'en-tête de la conversation active. Au clic, une boîte de confirmation prévient l'utilisateur et actualise instantanément l'affichage.
+* **Page 404 & Gestion d'Objet Introuvable** :
+  * Création d'une page [not-found.tsx](file:///C:/Users/Gwendal/.gemini/antigravity/scratch/hot-wheels-marketplace/app/not-found.tsx) personnalisée avec une charte graphique luxueuse (effet de verre dépoli, titre néon 404 et bouton de retour au catalogue).
+  * Intégration du déclencheur natif `notFound()` de Next.js dans la page de détails des produits pour rediriger automatiquement l'utilisateur vers cette page d'erreur si l'identifiant du produit demandé n'existe pas en base de données.
+* **Fichier de configuration** :
+  * Création du fichier standard `next.config.js` pour initialiser proprement la configuration Next.js.
+
+---
+
+## 8. Build de Production & Validation Git
+* **Compilation Next.js** : Le build de production est validé et fonctionnel sans aucun avertissement de compilation :
   ```bash
-  ✓ Compiled successfully in 2.8s
+  ✓ Compiled successfully in 4.0s
   Running TypeScript ...
-  Finished TypeScript in 4.9s ...
+  Finished TypeScript in 6.5s ...
   ```

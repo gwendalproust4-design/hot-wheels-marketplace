@@ -7,7 +7,7 @@ import { db } from '@/lib/db';
 import { mockDb, Message, Product, Profile, Order } from '@/lib/mockDb';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Send, MessageSquare, Bookmark } from 'lucide-react';
+import { Send, MessageSquare, Bookmark, Trash2 } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 interface ChatChannel {
@@ -390,6 +390,24 @@ function ChatPageContent() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleDeleteConversation = async () => {
+    if (!user || !activeChannel) return;
+    const confirmDelete = window.confirm("Voulez-vous vraiment supprimer cette conversation ? Tous les messages seront définitivement effacés.");
+    if (!confirmDelete) return;
+
+    try {
+      await db.deleteConversation(user.id, activeChannel.otherUserId, activeChannel.productId);
+      showToast("Conversation supprimée avec succès.", "success");
+      
+      // Reset active channel and reload list
+      setActiveChannel(null);
+      await loadChannels();
+    } catch (err) {
+      console.error("Error deleting conversation:", err);
+      showToast("Erreur lors de la suppression de la conversation.", "error");
+    }
+  };
+
   const loadChannels = async () => {
     if (!user) return;
     try {
@@ -682,16 +700,33 @@ function ChatPageContent() {
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Annonce : <strong>{currentChannelDetail.product.title}</strong></p>
               </div>
 
-              {/* Mini product link */}
-              <Link href={`/products/${currentChannelDetail.product.id}`} className="card-glass flex items-center gap-2" style={{
-                padding: '0.4rem 0.8rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-color)',
-                fontSize: '0.75rem'
-              }}>
-                <Bookmark size={12} className="logo-cyan" />
-                <span style={{ fontWeight: 700, color: 'var(--color-magenta)' }}>{currentChannelDetail.product.price.toFixed(2)} €</span>
-              </Link>
+              <div className="flex items-center gap-2">
+                {/* Mini product link */}
+                <Link href={`/products/${currentChannelDetail.product.id}`} className="card-glass flex items-center gap-2" style={{
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-color)',
+                  fontSize: '0.75rem'
+                }}>
+                  <Bookmark size={12} className="logo-cyan" />
+                  <span style={{ fontWeight: 700, color: 'var(--color-magenta)' }}>{currentChannelDetail.product.price.toFixed(2)} €</span>
+                </Link>
+
+                {/* Delete Conversation Button */}
+                <button
+                  onClick={handleDeleteConversation}
+                  className="btn btn-secondary flex items-center justify-center"
+                  style={{
+                    padding: '0.4rem',
+                    color: 'var(--error)',
+                    borderColor: 'rgba(255, 59, 48, 0.2)',
+                    borderRadius: 'var(--radius-sm)',
+                  }}
+                  title="Supprimer la conversation"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
 
             {/* Message History bubble grid */}

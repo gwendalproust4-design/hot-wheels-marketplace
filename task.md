@@ -11,4 +11,9 @@
 - [x] Améliorer le responsive sur mobile :
   - [x] Ajuster la taille de l'image principale (hero) sur la page d'accueil pour mobile
   - [x] Rendre la messagerie (chat) fonctionnelle et ergonomique sur mobile (positionnement fixed, masquage correct de la sidebar/zone de chat active avec !important, ajustement de la hauteur de l'en-tête)
+- [x] Nouvelles fonctionnalités de gestion et d'erreur :
+  - [x] Ajouter la possibilité de supprimer les conversations (messages associés)
+  - [x] Créer une page d'erreur 404 premium et intégrer le déclencheur notFound() pour les objets inexistants
+  - [x] Éliminer les warnings de configuration en créant un next.config.js standard
+
 

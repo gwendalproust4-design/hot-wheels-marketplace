@@ -426,5 +426,35 @@ export const db = {
       }
     }
     return mockDb.getNewsletterSubscribers();
+  },
+
+  deleteConversation: async (userId: string, otherUserId: string, productId: string): Promise<boolean> => {
+    if (isSupabaseConfigured && supabase) {
+      const { error: error1 } = await supabase
+        .from('messages')
+        .delete()
+        .eq('product_id', productId)
+        .eq('sender_id', userId)
+        .eq('receiver_id', otherUserId);
+      
+      const { error: error2 } = await supabase
+        .from('messages')
+        .delete()
+        .eq('product_id', productId)
+        .eq('sender_id', otherUserId)
+        .eq('receiver_id', userId);
+      
+      if (error1) throw error1;
+      if (error2) throw error2;
+      return true;
+    }
+    const messages = mockDb.getMessages();
+    const filtered = messages.filter(m => !(
+      m.product_id === productId &&
+      ((m.sender_id === userId && m.receiver_id === otherUserId) ||
+       (m.sender_id === otherUserId && m.receiver_id === userId))
+    ));
+    mockDb.setMessages(filtered);
+    return true;
   }
 };

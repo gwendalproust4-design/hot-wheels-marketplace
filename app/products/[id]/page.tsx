@@ -6,7 +6,7 @@ import { Product, Review } from '@/lib/mockDb';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ShoppingCart, MessageSquare, Heart, Star, Calendar, Bookmark, ShieldCheck, Tag } from 'lucide-react';
 
@@ -137,16 +137,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
   }
 
   if (!product) {
-    return (
-      <div className="container" style={{ padding: '4rem 1.5rem', textAlign: 'center' }}>
-        <h2 style={{ marginBottom: '1rem' }}>Modèle introuvable</h2>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Ce produit n'existe plus ou a été retiré de la vente.</p>
-        <Link href="/" className="btn btn-primary flex items-center gap-2" style={{ display: 'inline-flex' }}>
-          <ArrowLeft size={16} />
-          <span>Retour au catalogue</span>
-        </Link>
-      </div>
-    );
+    notFound();
   }
 
   const averageRating = reviews.length > 0
