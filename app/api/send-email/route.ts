@@ -4,7 +4,7 @@ import { Resend } from 'resend';
 // Initialize Resend SDK if API key is present
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
-const fromEmail = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+const fromEmail = process.env.EMAIL_FROM || 'noreply@classicbug.fr';
 
 export async function POST(request: Request) {
   try {
