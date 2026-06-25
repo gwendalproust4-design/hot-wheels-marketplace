@@ -16,9 +16,9 @@ Supabase est déjà configuré dans le code, mais les tables et déclencheurs do
   4. Cela va créer automatiquement les tables (`profiles`, `products`, `orders`, `messages`, `reviews`, `favorites`, `newsletter_subscribers`), les règles de sécurité RLS, et le déclencheur d'inscription.
 
 - [ ] **Définir le compte Vendeur unique** :
-  Par défaut, le script SQL attribue le rôle de vendeur (`role: 'seller'`) à l'adresse `vendeur@placeholder.com` lors de son inscription :
+  Par défaut, le script SQL attribue le rôle de vendeur (`role: 'seller'`) à l'adresse `hotwheelsfrench@gmail.com` lors de son inscription :
   ```sql
-  WHEN new.email = 'vendeur@placeholder.com' THEN 'seller'
+  WHEN new.email = 'hotwheelsfrench@gmail.com' THEN 'seller'
   ```
   *Option A (Recommandée)* : Modifiez cette adresse directement dans le fichier [supabase_setup.sql](file:///C:/Users/Gwendal/.gemini/antigravity/scratch/hot-wheels-marketplace/supabase_setup.sql) avec votre propre email de vendeur avant d'exécuter la requête.
   *Option B* : Inscrivez-vous normalement, puis allez dans la table `profiles` sur le tableau de bord Supabase et changez manuellement la valeur de la colonne `role` de `buyer` à `seller` pour votre ligne utilisateur.

@@ -34,7 +34,7 @@ BEGIN
     COALESCE(new.raw_user_meta_data->>'full_name', 'Collectionneur'),
     new.raw_user_meta_data->>'avatar_url',
     CASE 
-      WHEN new.email = 'vendeur@placeholder.com' THEN 'seller'
+      WHEN new.email = 'hotwheelsfrench@gmail.com' THEN 'seller'
       ELSE 'buyer'
     END
   );

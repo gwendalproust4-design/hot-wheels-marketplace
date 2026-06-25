@@ -24,7 +24,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const SELLER_EMAIL = process.env.NEXT_PUBLIC_SELLER_EMAIL || 'vendeur@placeholder.com';
+const SELLER_EMAIL = process.env.NEXT_PUBLIC_SELLER_EMAIL || 'hotwheelsfrench@gmail.com';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
