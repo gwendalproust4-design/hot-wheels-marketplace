@@ -173,7 +173,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-4 hero-buttons-container">
                 <Link href={`/products/${featuredProduct.id}`} className="btn btn-primary btn-glow">
                   Découvrir la Galerie
                 </Link>

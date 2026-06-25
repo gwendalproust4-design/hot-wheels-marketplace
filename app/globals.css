@@ -597,6 +597,9 @@ button {
 
   /* Fixed Header height for precise positioning */
   .header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
     height: 60px !important;
     padding: 0 !important;
     display: flex !important;
@@ -734,14 +737,14 @@ button {
   }
 
   /* Buttons mobile alignment */
-  .flex.gap-4 {
+  .hero-buttons-container {
     flex-direction: column;
     gap: 0.5rem !important;
     width: 100%;
   }
 
-  .flex.gap-4 button,
-  .flex.gap-4 a {
+  .hero-buttons-container button,
+  .hero-buttons-container a {
     width: 100%;
     text-align: center;
     justify-content: center;
