@@ -131,7 +131,7 @@ function LegalPageContent() {
 
             <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 700, marginTop: '1.5rem', marginBottom: '0.5rem' }}>Article 2 : Expédition et Frais de Port</h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-              Les colis sont expédiés de manière ultra-sécurisée sous 24h à 48h ouvrées. Les modes de livraison incluent Mondial Relay et Colissimo avec des tarifs fixes par pays. Pour les commandes de plusieurs articles, les frais de port sont évalués par le vendeur via le système de devis avant règlement.
+              Les colis sont expédiés de manière ultra-sécurisée. Les modes de livraison incluent Mondial Relay et Colissimo avec des tarifs fixes par pays. Pour les commandes de plusieurs articles, les frais de port sont évalués par le vendeur via le système de devis avant règlement.
             </p>
 
             <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 700, marginTop: '1.5rem', marginBottom: '0.5rem' }}>Article 3 : Rétractation</h3>

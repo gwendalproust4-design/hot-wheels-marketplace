@@ -300,7 +300,7 @@ export const mockDb = {
           sender_id: msgData.receiver_id,
           receiver_id: msgData.sender_id,
           product_id: msgData.product_id,
-          content: `Bonjour ! Merci pour l'intérêt que vous portez à nos modèles miniatures de collection. Votre colis sera emballé de manière ultra-sécurisée et expédié sous 24h ouvrées. N'hésitez pas si vous avez des questions spécifiques ! 😊`,
+          content: `Bonjour ! Merci pour l'intérêt que vous portez à nos modèles miniatures de collection. Votre colis sera emballé de manière ultra-sécurisée. N'hésitez pas si vous avez des questions spécifiques ! 😊`,
           created_at: new Date().toISOString()
         };
         currentMessages.push(autoReply);
