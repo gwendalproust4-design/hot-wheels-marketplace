@@ -4,7 +4,7 @@ import { stripe, isStripeConfigured } from '@/lib/stripe';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { productId, buyerId, sellerId, title, image, price, deliveryMethod, shippingAddress, totalPrice, orderId } = body;
+    const { productId, buyerId, sellerId, title, image, price, deliveryMethod, shippingAddress, totalPrice, orderId, buyerEmail } = body;
 
     if (!productId || !buyerId || !price) {
       console.warn('Checkout API: Missing required parameters', { productId, buyerId, price });
@@ -49,8 +49,8 @@ export async function POST(request: Request) {
 
       console.log('Checkout API: Creating Stripe session with metadata:', stripeMetadata);
 
-      // Create Stripe Checkout Session
-      const session = await stripe.checkout.sessions.create({
+      // Create Stripe Checkout Session Options
+      const sessionOptions: any = {
         payment_method_types: ['card', 'paypal'],
         line_items: [
           {
@@ -71,7 +71,13 @@ export async function POST(request: Request) {
           : `${baseUrl}/profile?checkout_success=true&session_id={CHECKOUT_SESSION_ID}&productId=${productId}`,
         cancel_url: `${baseUrl}/cart?checkout_cancel=true`,
         metadata: stripeMetadata,
-      });
+      };
+
+      if (buyerEmail) {
+        sessionOptions.customer_email = buyerEmail;
+      }
+
+      const session = await stripe.checkout.sessions.create(sessionOptions);
 
       return NextResponse.json({ url: session.url });
     } else {
@@ -92,6 +98,9 @@ export async function POST(request: Request) {
         postalCode: parsedAddress?.postalCode || '',
         country: parsedAddress?.country || '',
       });
+      if (buyerEmail) {
+        queryParams.set('buyerEmail', buyerEmail);
+      }
       if (orderId) {
         queryParams.set('orderId', orderId);
       }

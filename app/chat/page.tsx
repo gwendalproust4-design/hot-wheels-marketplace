@@ -109,7 +109,8 @@ function BasketQuoteBubble({
           deliveryMethod: order.delivery_method,
           shippingAddress: order.shipping_address,
           totalPrice: order.total_price,
-          orderId: order.id
+          orderId: order.id,
+          buyerEmail: user.email
         })
       });
       const data = await response.json();

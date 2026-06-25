@@ -34,6 +34,13 @@ function MockStripeContent() {
     }
   }, [productId]);
 
+  useEffect(() => {
+    const emailParam = searchParams.get('buyerEmail');
+    if (emailParam) {
+      setCardForm(prev => ({ ...prev, email: emailParam }));
+    }
+  }, [searchParams]);
+
   const resolvedTitle = product ? product.title : (searchParams.get('title') || 'Miniature de Collection');
   const resolvedImage = product ? (product.images?.[0] || '') : (searchParams.get('image') || '');
   

@@ -167,7 +167,8 @@ export default function CartPage() {
           price: primaryProduct.price,
           deliveryMethod: shippingInfo.name,
           shippingAddress: address,
-          totalPrice: totalPrice
+          totalPrice: totalPrice,
+          buyerEmail: user.email
         }),
       });
 
