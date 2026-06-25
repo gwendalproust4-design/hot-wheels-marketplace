@@ -8,6 +8,7 @@ import { mockDb, Message, Product, Profile, Order } from '@/lib/mockDb';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Send, MessageSquare, Bookmark } from 'lucide-react';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 interface ChatChannel {
   productId: string;
@@ -407,7 +408,22 @@ function ChatPageContent() {
       const allProducts = await db.getAllProducts();
       
       // profiles query
-      const allProfiles = mockDb.getProfiles(); // mock profiles fallback
+      let allProfiles: Profile[] = [];
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*');
+          if (!error && data) {
+            allProfiles = data as Profile[];
+          }
+        } catch (err) {
+          console.error('Error fetching profiles from Supabase in chat:', err);
+        }
+      }
+      if (allProfiles.length === 0) {
+        allProfiles = mockDb.getProfiles();
+      }
 
       for (const [key, msgs] of Array.from(channelMap.entries())) {
         const [productId, otherUserId] = key.split(':');
@@ -606,13 +622,15 @@ function ChatPageContent() {
                     }}
                   >
                     <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-cyan)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
-                      <span style={{ fontSize: '0.85rem' }}>{chan.otherProfile.username.substring(0, 2).toUpperCase()}</span>
+                      <span style={{ fontSize: '0.85rem' }}>
+                        {(chan.otherProfile.role === 'seller' ? 'classicbug' : chan.otherProfile.username).substring(0, 2).toUpperCase()}
+                      </span>
                     </div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="flex justify-between items-baseline">
                         <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: isActive ? 'var(--color-cyan)' : '#fff', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                          @{chan.otherProfile.username}
+                          @{chan.otherProfile.role === 'seller' ? 'classicbug' : chan.otherProfile.username}
                         </h4>
                         <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
                           {new Date(chan.lastMessage.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
@@ -658,7 +676,9 @@ function ChatPageContent() {
                 >
                   ← Discussions
                 </button>
-                <h3 style={{ fontWeight: 700, fontSize: '1rem', color: '#fff' }}>@{currentChannelDetail.otherProfile.username}</h3>
+                <h3 style={{ fontWeight: 700, fontSize: '1rem', color: '#fff' }}>
+                  @{currentChannelDetail.otherProfile.role === 'seller' ? 'classicbug' : currentChannelDetail.otherProfile.username}
+                </h3>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Annonce : <strong>{currentChannelDetail.product.title}</strong></p>
               </div>
 
@@ -688,9 +708,12 @@ function ChatPageContent() {
               }}
             >
               {messages.map((msg) => {
-                const isSentByMe = msg.sender_id === user.id;
-                const isBasketQuote = msg.content.startsWith('[BASKET_QUOTE]:');
-                const senderUsername = isSentByMe ? user.username : (currentChannelDetail?.otherProfile.username || 'collector_club');
+                 const isSentByMe = msg.sender_id === user.id;
+                 const isBasketQuote = msg.content.startsWith('[BASKET_QUOTE]:');
+                 const isSenderSeller = (isSentByMe && user.role === 'seller') || (!isSentByMe && currentChannelDetail?.otherProfile.role === 'seller');
+                 const senderUsername = isSenderSeller 
+                   ? 'classicbug' 
+                   : (isSentByMe ? user.username : (currentChannelDetail?.otherProfile.username || 'collector_club'));
                 
                 if (isBasketQuote) {
                   return (
