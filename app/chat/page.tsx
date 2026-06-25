@@ -689,10 +689,21 @@ function ChatPageContent() {
               {messages.map((msg) => {
                 const isSentByMe = msg.sender_id === user.id;
                 const isBasketQuote = msg.content.startsWith('[BASKET_QUOTE]:');
+                const senderUsername = isSentByMe ? user.username : (currentChannelDetail?.otherProfile.username || 'collector_club');
                 
                 if (isBasketQuote) {
                   return (
-                    <div key={msg.id} style={{ display: 'flex', justifyContent: isSentByMe ? 'flex-end' : 'flex-start', margin: '1rem 0' }}>
+                    <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isSentByMe ? 'flex-end' : 'flex-start', margin: '1rem 0', gap: '0.35rem' }}>
+                      <span style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: 'var(--color-cyan)',
+                        opacity: 0.85,
+                        marginRight: isSentByMe ? '0.5rem' : '0',
+                        marginLeft: isSentByMe ? '0' : '0.5rem'
+                      }}>
+                        @{senderUsername}
+                      </span>
                       <BasketQuoteBubble msg={msg} isSentByMe={isSentByMe} userOrders={userOrders} loadUserOrders={loadUserOrders} activeChannel={activeChannel} />
                     </div>
                   );
@@ -703,6 +714,17 @@ function ChatPageContent() {
                     key={msg.id} 
                     className={`message-bubble ${isSentByMe ? 'sent' : 'received'}`}
                   >
+                    <div style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      color: isSentByMe ? '#a0cfff' : '#ffd700',
+                      marginBottom: '0.35rem',
+                      opacity: 0.95,
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                      paddingBottom: '0.25rem'
+                    }}>
+                      @{senderUsername}
+                    </div>
                     <p style={{ fontSize: '0.9rem' }}>{msg.content}</p>
                     <span style={{
                       display: 'block',
