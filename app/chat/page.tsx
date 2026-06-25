@@ -587,7 +587,7 @@ function ChatPageContent() {
           minHeight: 0,
           overflow: 'hidden'
         }}>
-          <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--border-color)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.8rem', color: 'var(--color-cyan)' }}>
+          <div className="chat-sidebar-header" style={{ padding: '1.25rem', borderBottom: '1px solid var(--border-color)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.8rem', color: 'var(--color-cyan)' }}>
             Discussions
           </div>
           
@@ -621,13 +621,13 @@ function ChatPageContent() {
                       if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                   >
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-cyan)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-cyan)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>
                       <span style={{ fontSize: '0.85rem' }}>
                         {(chan.otherProfile.role === 'seller' ? 'classicbug' : chan.otherProfile.username).substring(0, 2).toUpperCase()}
                       </span>
                     </div>
 
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="chat-channel-text" style={{ flex: 1, minWidth: 0 }}>
                       <div className="flex justify-between items-baseline">
                         <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: isActive ? 'var(--color-cyan)' : '#fff', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                           @{chan.otherProfile.role === 'seller' ? 'classicbug' : chan.otherProfile.username}

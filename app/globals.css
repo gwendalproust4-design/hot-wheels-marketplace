@@ -603,11 +603,7 @@ button {
     align-items: center !important;
   }
 
-  /* Chat Container Layout - fixed fullscreen mobile view */
-  .chat-container {
-    height: calc(100vh - 120px) !important;
-  }
-
+  /* Chat Container Layout - fixed fullscreen split-screen mobile view */
   .chat-grid {
     position: fixed !important;
     top: 60px !important;
@@ -619,7 +615,7 @@ button {
     border-radius: 0 !important;
     border: none !important;
     z-index: 99 !important;
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 75px 1fr !important;
     background-color: var(--bg-secondary) !important;
   }
 
@@ -627,17 +623,41 @@ button {
     display: flex !important;
     flex-direction: column !important;
     height: 100% !important;
+    width: 75px !important;
+    min-width: 75px !important;
   }
+
+  .chat-sidebar-header {
+    display: none !important;
+  }
+
+  .chat-channels-list button {
+    justify-content: center !important;
+    padding: 1rem 0.5rem !important;
+  }
+
+  .chat-channel-text {
+    display: none !important;
+  }
+
   .chat-grid .chat-area {
-    display: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    flex: 1 !important;
   }
+  
   .chat-grid.channel-active .chat-sidebar {
-    display: none !important;
+    display: flex !important;
   }
+  
   .chat-grid.channel-active .chat-area {
     display: flex !important;
     flex-direction: column !important;
     height: 100% !important;
+    min-width: 0 !important;
+    flex: 1 !important;
   }
 
   .chat-grid .chat-area > div:first-child {
@@ -646,25 +666,18 @@ button {
   .chat-grid .chat-area form {
     padding: 0.75rem 1rem !important;
   }
+  
   .mobile-back-button {
-    display: inline-flex !important;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--color-cyan);
-    font-weight: 700;
-    font-size: 0.85rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    margin-bottom: 0.75rem;
+    display: none !important;
   }
-    .flex.items-center.gap-6 {
+
+  .flex.items-center.gap-6 {
     gap: 0.75rem !important;
     flex-wrap: wrap;
   }
 
   .filter-search-group {
-    grid-column: span 1 !important;
+    grid-column: span 2 !important;
   }
 }
 
@@ -765,16 +778,14 @@ button {
     font-size: 1.05rem !important;
   }
   
-  /* Stacking product actions on mobile to prevent overflow */
+  /* Keep product actions side-by-side on mobile */
   .grid-catalog .card .grid {
-    grid-template-columns: 1fr !important;
     gap: 0.35rem !important;
   }
   .grid-catalog .card .btn {
     padding: 0.45rem !important;
     font-size: 0.65rem !important;
     letter-spacing: 0.02em !important;
-    width: 100% !important;
   }
 
   /* Glassmorphic forms & login cards padding */
