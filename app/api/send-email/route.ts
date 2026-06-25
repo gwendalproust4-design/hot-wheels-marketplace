@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     if (resend) {
       try {
         const data = await resend.emails.send({
-          from: `Hot Wheels Marketplace <${fromEmail}>`,
+          from: `Classicbug <${fromEmail}>`,
           to: [to],
           subject: subject,
           html: html,

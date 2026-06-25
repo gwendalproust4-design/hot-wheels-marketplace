@@ -100,7 +100,7 @@ function MockStripeContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             to: cardForm.email,
-            subject: `Confirmation de votre commande - Hot Wheels Marketplace`,
+            subject: `Confirmation de votre commande - Classicbug`,
             html: `
               <div style="background-color: #060713; color: #ffffff; font-family: sans-serif; padding: 2rem; border-radius: 8px; max-width: 600px; margin: 0 auto; border: 1px solid #00efff;">
                 <h1 style="color: #00efff; text-align: center; border-bottom: 2px solid #ff007f; padding-bottom: 1rem; margin-top: 0;">Commande Confirmée !</h1>
