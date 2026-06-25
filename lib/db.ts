@@ -430,23 +430,19 @@ export const db = {
 
   deleteConversation: async (userId: string, otherUserId: string, productId: string): Promise<boolean> => {
     if (isSupabaseConfigured && supabase) {
-      const { error: error1 } = await supabase
-        .from('messages')
-        .delete()
-        .eq('product_id', productId)
-        .eq('sender_id', userId)
-        .eq('receiver_id', otherUserId);
-      
-      const { error: error2 } = await supabase
-        .from('messages')
-        .delete()
-        .eq('product_id', productId)
-        .eq('sender_id', otherUserId)
-        .eq('receiver_id', userId);
-      
-      if (error1) throw error1;
-      if (error2) throw error2;
-      return true;
+      try {
+        const response = await fetch('/api/chat/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, otherUserId, productId })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to delete conversation');
+        return true;
+      } catch (err) {
+        console.error('Failed to delete conversation via API:', err);
+        throw err;
+      }
     }
     const messages = mockDb.getMessages();
     const filtered = messages.filter(m => !(
