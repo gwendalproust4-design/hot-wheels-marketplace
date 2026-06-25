@@ -1662,6 +1662,60 @@ function ProfilePageContent() {
         </div>
       )}
 
+      {activeTab === 'account' && (
+        <div className="card card-glass" style={{ padding: '2.5rem', maxWidth: '600px', margin: '0 auto' }}>
+          <h3 className="flex items-center gap-2" style={{ fontSize: '1.25rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '1.5rem', letterSpacing: '0.05em', color: 'var(--color-cyan)' }}>
+            <Shield size={18} />
+            <span>Informations de Mon Compte</span>
+          </h3>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div className="flex justify-between items-center" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Nom d'utilisateur :</span>
+              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>@{user.username}</span>
+            </div>
+
+            <div className="flex justify-between items-center" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Nom Complet :</span>
+              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>{user.full_name}</span>
+            </div>
+
+            <div className="flex justify-between items-center" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Adresse E-mail :</span>
+              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-cyan)' }}>{user.email}</span>
+            </div>
+
+            <div className="flex justify-between items-center" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Rôle du Profil :</span>
+              <span className={`badge ${user.role === 'seller' ? 'badge-danger' : 'badge-loose'}`} style={{ fontSize: '0.7rem' }}>
+                {user.role === 'seller' ? 'Boutique (Vendeur)' : 'Collectionneur (Acheteur)'}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Date d'inscription :</span>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                {user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Non renseignée'}
+              </span>
+            </div>
+
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+              <button 
+                onClick={async () => {
+                  await signOut();
+                  showToast('Déconnecté avec succès.', 'info');
+                  router.push('/');
+                }}
+                className="btn btn-secondary"
+                style={{ width: '100%', padding: '0.85rem', color: '#ff0055', borderColor: 'rgba(255, 0, 85, 0.2)', backgroundColor: 'rgba(255, 0, 85, 0.02)' }}
+              >
+                Se Déconnecter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Review Dialog modal */}
       {reviewOrder && (
         <div style={{
