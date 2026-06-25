@@ -225,7 +225,7 @@ export default function CartPage() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {cartItems.map((item) => (
-                <div key={item.id} className="flex justify-between items-center" style={{
+                <div key={item.id} className="flex justify-between items-center cart-item" style={{
                   borderBottom: '1px solid var(--border-color)',
                   paddingBottom: '1.25rem',
                   marginBottom: '1.25rem'
