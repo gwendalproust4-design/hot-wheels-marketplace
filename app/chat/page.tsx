@@ -201,6 +201,29 @@ function BasketQuoteBubble({
         ))}
       </div>
 
+      {/* Adresse de livraison */}
+      <div style={{
+        fontSize: '0.75rem',
+        color: 'var(--text-secondary)',
+        backgroundColor: 'rgba(255, 255, 255, 0.02)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        borderRadius: 'var(--radius-sm)',
+        padding: '0.65rem',
+        marginBottom: '1rem',
+        borderLeft: '2px solid var(--color-cyan)'
+      }}>
+        <div style={{ fontWeight: 700, color: 'var(--color-cyan)', marginBottom: '0.35rem', textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: '0.05em' }}>
+          Adresse de Livraison :
+        </div>
+        <div><strong>{quoteData.shippingAddress?.fullName}</strong></div>
+        <div>{quoteData.shippingAddress?.addressLine1}</div>
+        <div>{quoteData.shippingAddress?.postalCode} {quoteData.shippingAddress?.city}</div>
+        <div>{quoteData.shippingAddress?.country}</div>
+        {quoteData.shippingAddress?.phone && (
+          <div style={{ marginTop: '0.35rem', color: 'var(--text-muted)' }}>Tél : {quoteData.shippingAddress.phone}</div>
+        )}
+      </div>
+
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem', marginBottom: '1rem', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
         <div className="flex justify-between">
           <span style={{ color: 'var(--text-secondary)' }}>Sous-total</span>
