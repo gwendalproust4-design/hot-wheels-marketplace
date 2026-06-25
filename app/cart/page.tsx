@@ -39,6 +39,7 @@ export default function CartPage() {
     phone: ''
   });
   const [checkingOut, setCheckingOut] = useState(false);
+  const [acceptCGV, setAcceptCGV] = useState(false);
 
   const isMultiProduct = cartItems.length > 1;
   const shippingInfo = SHIPPING_COSTS[address.country] || SHIPPING_COSTS['France'];
@@ -52,6 +53,11 @@ export default function CartPage() {
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!acceptCGV) {
+      showToast('Veuillez accepter les Conditions Générales de Vente (CGV) pour continuer', 'error');
+      return;
+    }
     
     if (!user) {
       showToast('Veuillez vous connecter pour procéder au paiement', 'info');
@@ -415,6 +421,31 @@ export default function CartPage() {
                 <span>Total</span>
                 <span className="neon-gradient-text" style={{ fontSize: '1.3rem' }}>{totalPrice.toFixed(2)} €</span>
               </div>
+            </div>
+
+            {/* CGV acceptance checkbox */}
+            <div className="flex items-start gap-2" style={{ margin: '1.25rem 0 1.5rem 0', userSelect: 'none' }}>
+              <input 
+                type="checkbox" 
+                id="acceptCGV" 
+                checked={acceptCGV}
+                onChange={(e) => setAcceptCGV(e.target.checked)}
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  marginTop: '2px',
+                  cursor: 'pointer',
+                  accentColor: 'var(--color-cyan)',
+                  flexShrink: 0
+                }}
+              />
+              <label htmlFor="acceptCGV" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', cursor: 'pointer', lineHeight: '1.4' }}>
+                En cochant cette case, j'accepte sans réserve les{' '}
+                <Link href="/legal?tab=cgv" target="_blank" style={{ color: 'var(--color-cyan)', textDecoration: 'underline' }}>
+                  Conditions Générales de Vente (CGV)
+                </Link>
+                .
+              </label>
             </div>
 
             <button 
