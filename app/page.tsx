@@ -250,7 +250,7 @@ export default function Home() {
       )}
 
       {/* Trust Badges Grid */}
-      <section style={{
+      <section className="hide-mobile" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
         gap: '1.5rem',
