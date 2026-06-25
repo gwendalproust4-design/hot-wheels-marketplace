@@ -56,7 +56,7 @@ const renderDeliveryMethod = (method: string) => {
 };
 
 function ProfilePageContent() {
-  const { user, signIn, signUp, signOut, loading: authLoading } = useAuth();
+  const { user, signIn, signUp, signOut, loading: authLoading, toggleTestRole } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -825,6 +825,15 @@ function ProfilePageContent() {
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
                 Type de profil : <strong>{user.role === 'seller' ? 'Propriétaire Boutique' : 'Collectionneur (Acheteur)'}</strong>
               </p>
+              {toggleTestRole && (user.username === 'Loichot-Proust' || user.id === '60c7cdb6-ff60-41ed-a467-64ea02055041') && (
+                <button 
+                  onClick={toggleTestRole}
+                  className="btn btn-secondary btn-sm"
+                  style={{ marginTop: '0.5rem', display: 'inline-flex', padding: '0.35rem 0.75rem', fontSize: '0.7rem' }}
+                >
+                  Basculer en mode {user.role === 'seller' ? 'Acheteur' : 'Vendeur'} (Test)
+                </button>
+              )}
             </div>
           </div>
         </div>

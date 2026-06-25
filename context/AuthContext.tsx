@@ -20,6 +20,7 @@ interface AuthContextType {
   signIn: (email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   signUp: (email: string, password?: string, username?: string, fullName?: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
+  toggleTestRole?: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,6 +47,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             const isSeller = session.user.email === SELLER_EMAIL;
 
+            let finalRole: 'buyer' | 'seller' = (profile?.role === 'seller' || isSeller) ? 'seller' : 'buyer';
+            
+            // Check if there is a local role override for test user
+            if (profile?.username === 'Loichot-Proust' || session.user.id === '60c7cdb6-ff60-41ed-a467-64ea02055041') {
+              const savedOverride = localStorage.getItem('test_role_override');
+              if (savedOverride === 'buyer' || savedOverride === 'seller') {
+                finalRole = savedOverride;
+              }
+            }
+
             if (profile) {
               setUser({
                 id: session.user.id,
@@ -53,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 username: profile.username || '',
                 full_name: profile.full_name || '',
                 avatar_url: profile.avatar_url || '',
-                role: (profile.role === 'seller' || isSeller) ? 'seller' : 'buyer',
+                role: finalRole,
                 created_at: profile.created_at,
               });
             } else {
@@ -63,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 username: session.user.email?.split('@')[0] || 'collector',
                 full_name: 'Collectionneur',
                 avatar_url: '',
-                role: isSeller ? 'seller' : 'buyer',
+                role: finalRole,
                 created_at: new Date().toISOString(),
               });
             }
@@ -122,13 +133,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .eq('id', data.user.id)
             .single();
 
+          const isSeller = email === SELLER_EMAIL;
+          let finalRole: 'buyer' | 'seller' = (profile?.role === 'seller' || isSeller) ? 'seller' : 'buyer';
+          
+          if (profile?.username === 'Loichot-Proust' || data.user.id === '60c7cdb6-ff60-41ed-a467-64ea02055041') {
+            const savedOverride = localStorage.getItem('test_role_override');
+            if (savedOverride === 'buyer' || savedOverride === 'seller') {
+              finalRole = savedOverride;
+            }
+          }
+
           const authUser: AuthUser = {
             id: data.user.id,
             email: data.user.email || '',
             username: profile?.username || email.split('@')[0],
             full_name: profile?.full_name || 'Collectionneur',
             avatar_url: profile?.avatar_url || '',
-            role: (profile?.role === 'seller' || isSeller) ? 'seller' : 'buyer',
+            role: finalRole,
             created_at: profile?.created_at || new Date().toISOString(),
           };
           setUser(authUser);
@@ -242,8 +263,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   };
 
+  const toggleTestRole = () => {
+    if (!user) return;
+    if (user.username === 'Loichot-Proust' || user.id === '60c7cdb6-ff60-41ed-a467-64ea02055041') {
+      const newRole = user.role === 'seller' ? 'buyer' : 'seller';
+      setUser({
+        ...user,
+        role: newRole
+      });
+      localStorage.setItem('test_role_override', newRole);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, toggleTestRole }}>
       {children}
     </AuthContext.Provider>
   );
